@@ -362,6 +362,18 @@
   .forecast-seg { height: 100%; transition: width 0.5s; }
   /* Empty */
   .empty { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; }
+  /* Split categoria */
+  .split-line { display:grid;grid-template-columns:1fr 90px 36px;gap:8px;align-items:center;margin-bottom:8px; }
+  .split-mode { display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden; }
+  .split-mode-btn { background:none;border:none;color:var(--text3);padding:4px 10px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all 0.15s; }
+  .split-mode-btn.active { background:var(--bg4);color:var(--text); }
+  /* Duplicata */
+  .dup-row { opacity:0.5; }
+  .dup-badge { font-size:10px;background:var(--amber-bg);color:var(--amber);padding:2px 6px;border-radius:4px; }
+  /* Progress import */
+  .file-chip { display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--text2);margin:2px; }
+  .file-chip.done { border-color:rgba(45,217,143,0.3);color:var(--green); }
+  .file-chip.error { border-color:rgba(245,101,101,0.3);color:var(--red); }
   /* Responsive */
   @media (max-width: 900px) {
     .sidebar { width: 56px; }
@@ -565,12 +577,22 @@
               </div>
               <div id="import-csv-tab">
                 <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">Suportado: Nubank, C6 Bank, Mercado Pago, OFX genérico</p>
-                <div class="import-area" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondrop="dropFile(event)" ondragleave="dragLeave()">
+                <div class="import-area" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondrop="dropFiles(event)" ondragleave="dragLeave()">
                   <div class="import-icon">⬆</div>
-                  <div class="import-text">Arraste o arquivo ou clique para selecionar</div>
-                  <div class="import-sub">CSV exportado do app do banco · Até 10 MB</div>
+                  <div class="import-text">Arraste arquivos ou clique para selecionar</div>
+                  <div class="import-sub">Vários arquivos de uma vez · Nubank, C6, Mercado Pago · CSV/OFX</div>
                 </div>
-                <input type="file" id="file-input" accept=".csv,.ofx,.txt" style="display:none" onchange="handleFile(this.files[0])">
+                <input type="file" id="file-input" accept=".csv,.ofx,.txt" style="display:none" multiple onchange="handleFiles(this.files)">
+                <!-- Barra de progresso de import -->
+                <div id="import-progress" style="display:none;margin-top:14px;">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:6px;">
+                    <span id="progress-label">Processando...</span>
+                    <span id="progress-count"></span>
+                  </div>
+                  <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;">
+                    <div id="progress-bar-fill" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.3s;"></div>
+                  </div>
+                </div>
               </div>
               <div id="import-ofx-tab" style="display:none">
                 <p style="font-size:12px;color:var(--text3);margin-bottom:12px;">Cole o conteúdo OFX abaixo ou arraste o arquivo</p>
@@ -620,8 +642,9 @@
             </div>
           </div>
           <div style="overflow-x:auto;padding:0 18px 18px;">
+            <div id="import-stats" style="display:flex;gap:16px;padding:0 0 12px;font-size:12px;color:var(--text3);flex-wrap:wrap;"></div>
             <table class="preview-table" id="preview-table">
-              <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Origem</th></tr></thead>
+              <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Parcela</th><th>Origem</th><th>Dup?</th></tr></thead>
               <tbody id="preview-body"></tbody>
             </table>
           </div>
@@ -634,7 +657,7 @@
 
 <!-- Modal Lançamento -->
 <div class="modal-overlay" id="modal-add">
-  <div class="modal">
+  <div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
     <div class="modal-title" id="modal-add-title">Novo lançamento</div>
     <div class="form-group">
       <label class="form-label">Descrição</label>
@@ -642,8 +665,8 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Valor (R$)</label>
-        <input class="form-input" id="tx-value" type="number" step="0.01" placeholder="0,00">
+        <label class="form-label">Valor total (R$)</label>
+        <input class="form-input" id="tx-value" type="number" step="0.01" placeholder="0,00" oninput="recalcSplit()">
       </div>
       <div class="form-group">
         <label class="form-label">Tipo</label>
@@ -655,23 +678,58 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Categoria</label>
-        <select class="form-select" id="tx-cat-sel"></select>
-      </div>
-      <div class="form-group">
         <label class="form-label">Data</label>
         <input class="form-input" id="tx-date" type="date">
       </div>
+      <div class="form-group">
+        <label class="form-label">Conta/Cartão</label>
+        <select class="form-select" id="tx-conta">
+          <option>Nubank</option>
+          <option>C6 Bank</option>
+          <option>Mercado Pago</option>
+          <option>Outro</option>
+        </select>
+      </div>
     </div>
+
+    <!-- PARCELAS -->
     <div class="form-group">
-      <label class="form-label">Conta/Cartão</label>
-      <select class="form-select" id="tx-conta">
-        <option>Nubank</option>
-        <option>C6 Bank</option>
-        <option>Mercado Pago</option>
-        <option>Outro</option>
-      </select>
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="tx-parcelado" onchange="toggleParcelado()" style="width:14px;height:14px;accent-color:var(--accent);">
+        Compra parcelada
+      </label>
+      <div id="parcela-box" style="display:none;margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Parcela atual</label>
+            <input class="form-input" id="tx-parc-atual" type="number" min="1" value="1" oninput="recalcParcela()">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Total de parcelas</label>
+            <input class="form-input" id="tx-parc-total" type="number" min="1" value="12" oninput="recalcParcela()">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Valor da parcela</label>
+            <input class="form-input" id="tx-parc-valor" type="number" step="0.01" placeholder="auto" oninput="recalcParcelaFromValor()">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="parcela-info">Preencha o valor total e o número de parcelas</div>
+      </div>
     </div>
+
+    <!-- MULTI-CATEGORIA -->
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:8px;justify-content:space-between;">
+        <span>Categorias</span>
+        <button class="btn" style="padding:3px 8px;font-size:11px;" onclick="addSplitLine()">+ dividir categoria</button>
+      </label>
+      <div id="split-lines"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;display:flex;justify-content:space-between;" id="split-total-info">
+        <span>Alocado: <span id="split-alocado" style="color:var(--text)">R$ 0,00</span></span>
+        <span>Restante: <span id="split-restante" style="color:var(--amber)">R$ 0,00</span></span>
+      </div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Observação (opcional)</label>
       <input class="form-input" id="tx-obs" placeholder="Nota adicional...">
@@ -825,7 +883,6 @@ const CAT_ICONS = {
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
-  if (!state.transactions.length) seedDemoData();
   updateMonthLabel();
   populateCatSelects();
   renderAll();
@@ -853,51 +910,6 @@ function saveToStorage() {
   localStorage.setItem('fx_state', JSON.stringify(toSave));
 }
 
-function seedDemoData() {
-  const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth();
-  const mkd = (d, desc, val, cat, tipo, conta='Nubank') => ({
-    id: Math.random().toString(36).slice(2),
-    date: new Date(y, m, d).toISOString().split('T')[0],
-    desc, value: val, cat, type: tipo, conta, obs: ''
-  });
-  state.transactions = [
-    mkd(1,'Salário',6500,'Receita','entrada','C6 Bank'),
-    mkd(2,'Supermercado Extra',380,'Alimentação','saida'),
-    mkd(3,'Uber',32,'Transporte','saida'),
-    mkd(5,'Netflix',55.90,'Lazer','saida'),
-    mkd(5,'Spotify',21.90,'Lazer','saida'),
-    mkd(6,'Aluguel',1800,'Moradia','saida'),
-    mkd(7,'Farmácia',85,'Saúde','saida'),
-    mkd(8,'iFood',67,'Alimentação','saida'),
-    mkd(10,'Posto Shell',180,'Transporte','saida'),
-    mkd(12,'Mercado Pago - freelance',900,'Receita','entrada','Mercado Pago'),
-    mkd(14,'Amazon - livros',120,'Educação','saida'),
-    mkd(15,'Conta de luz',140,'Moradia','saida'),
-    mkd(16,'Restaurante Fogo de Chão',230,'Alimentação','saida'),
-    mkd(18,'Plano de saúde',350,'Saúde','saida'),
-    mkd(20,'Supermercado Pão de Açúcar',220,'Alimentação','saida'),
-    mkd(22,'Bar com amigos',95,'Lazer','saida'),
-    mkd(23,'Aplicativo - NuInvest',500,'Investimento','saida'),
-    mkd(25,'Uber Eats',45,'Alimentação','saida'),
-    mkd(26,'C6 - cashback',35,'Receita','entrada','C6 Bank'),
-    mkd(28,'Celular Tim',85,'Serviços','saida'),
-  ];
-  state.scheduled = [
-    {id:'s1',desc:'Aluguel',value:1800,type:'saida',cat:'Moradia',day:6,recur:'mensal'},
-    {id:'s2',desc:'Netflix',value:55.90,type:'saida',cat:'Lazer',day:5,recur:'mensal'},
-    {id:'s3',desc:'Plano de saúde',value:350,type:'saida',cat:'Saúde',day:18,recur:'mensal'},
-    {id:'s4',desc:'Salário',value:6500,type:'entrada',cat:'Receita',day:1,recur:'mensal'},
-    {id:'s5',desc:'Spotify',value:21.90,type:'saida',cat:'Lazer',day:5,recur:'mensal'},
-    {id:'s6',desc:'Celular Tim',value:85,type:'saida',cat:'Serviços',day:28,recur:'mensal'},
-  ];
-  state.limits = {
-    'Alimentação':800,'Transporte':300,'Moradia':2000,
-    'Saúde':500,'Lazer':400,'Educação':200,'Compras':300,
-    'Serviços':200,'Investimento':1000,'Outros':150
-  };
-  saveToStorage();
-}
 
 // ============================================================
 // NAV
@@ -1013,14 +1025,21 @@ function txRow(tx) {
   const icon = CAT_ICONS[tx.cat] || '📦';
   const sign = tx.type === 'entrada' ? '+' : '-';
   const col = tx.type === 'entrada' ? 'var(--green)' : 'var(--red)';
+  const splits = tx.splits && tx.splits.length > 1;
+  const catDisplay = splits
+    ? tx.splits.map(s => catBadge(s.cat)).join(' ')
+    : catBadge(tx.cat);
+  const parcelaTag = tx.parcela
+    ? `<span class="badge" style="background:var(--purple-bg);color:var(--purple)">${tx.parcela.atual}/${tx.parcela.total}x</span>`
+    : '';
   return `
   <div class="tx-row" id="txrow-${tx.id}">
     <div class="tx-icon" style="background:${(CAT_COLORS[tx.cat]||'#718096')}22;font-size:16px">${icon}</div>
     <div class="tx-desc">
-      <div class="tx-name">${tx.desc}</div>
+      <div class="tx-name">${tx.desc} ${parcelaTag}</div>
       <div class="tx-meta">${tx.conta || ''}</div>
     </div>
-    <div>${catBadge(tx.cat)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;">${catDisplay}</div>
     <div class="tx-amount" style="color:${col}">${sign} ${fmtBRL(tx.value)}</div>
     <div class="tx-date">${formatDate(tx.date)}</div>
     <div class="tx-actions">
@@ -1067,7 +1086,13 @@ function renderCatSummary() {
   const txs = filteredTx().filter(t=>t.type==='saida');
   const total = txs.reduce((s,t)=>s+t.value,0);
   const byCat = {};
-  txs.forEach(t=>{ byCat[t.cat] = (byCat[t.cat]||0) + t.value; });
+  txs.forEach(t=>{
+    if (t.splits && t.splits.length > 1) {
+      t.splits.forEach(s=>{ byCat[s.cat] = (byCat[s.cat]||0) + s.value; });
+    } else {
+      byCat[t.cat] = (byCat[t.cat]||0) + t.value;
+    }
+  });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,7);
   document.getElementById('cat-summary').innerHTML = sorted.map(([cat,val]) => {
     const pct = total > 0 ? (val/total*100).toFixed(0) : 0;
@@ -1321,23 +1346,153 @@ function openModal(type, data) {
   if (type === 'add') {
     state.editId = data ? data.id : null;
     document.getElementById('modal-add-title').textContent = data ? 'Editar lançamento' : 'Novo lançamento';
+    document.getElementById('tx-parcelado').checked = false;
+    document.getElementById('parcela-box').style.display = 'none';
     if (data) {
       document.getElementById('tx-desc').value = data.desc;
       document.getElementById('tx-value').value = data.value;
       document.getElementById('tx-type').value = data.type;
-      document.getElementById('tx-cat-sel').value = data.cat;
       document.getElementById('tx-date').value = data.date;
       document.getElementById('tx-conta').value = data.conta||'Nubank';
       document.getElementById('tx-obs').value = data.obs||'';
+      // split de categorias
+      const splits = data.splits || [{cat: data.cat, value: data.value, mode: 'value'}];
+      initSplitLines(splits, data.value);
+      // parcela
+      if (data.parcela) {
+        document.getElementById('tx-parcelado').checked = true;
+        document.getElementById('parcela-box').style.display = 'block';
+        document.getElementById('tx-parc-atual').value = data.parcela.atual;
+        document.getElementById('tx-parc-total').value = data.parcela.total;
+        document.getElementById('tx-parc-valor').value = data.parcela.valor;
+      }
     } else {
       document.getElementById('tx-desc').value = '';
       document.getElementById('tx-value').value = '';
       document.getElementById('tx-date').value = todayStr();
+      initSplitLines([], 0);
     }
     document.getElementById('modal-add').classList.add('show');
   } else if (type === 'schedule') {
     document.getElementById('modal-schedule').classList.add('show');
   }
+}
+
+// ── MULTI-CATEGORIA (split) ─────────────────────────────────────────────────
+function initSplitLines(splits, total) {
+  const container = document.getElementById('split-lines');
+  container.innerHTML = '';
+  const lines = splits.length ? splits : [{cat: Object.keys(CAT_COLORS)[0], value: total||0, mode: 'value'}];
+  lines.forEach(s => addSplitLine(s));
+  recalcSplit();
+}
+
+function addSplitLine(data) {
+  const id = 'sl_' + Math.random().toString(36).slice(2);
+  const container = document.getElementById('split-lines');
+  const cats = Object.keys(CAT_COLORS);
+  const catOpts = cats.map(c => `<option value="${c}" ${data&&c===data.cat?'selected':''} >${c}</option>`).join('');
+  const mode = data ? (data.mode||'value') : 'value';
+  const val = data ? (data.value||0) : 0;
+  const pct = data ? (data.pct||0) : 0;
+  const div = document.createElement('div');
+  div.className = 'split-line';
+  div.id = id;
+  div.innerHTML = `
+    <select class="form-select" style="font-size:12px;" onchange="recalcSplit()">
+      ${catOpts}
+    </select>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <div class="split-mode">
+        <button class="split-mode-btn ${mode==='value'?'active':''}" onclick="setSplitMode(this,'value')" type="button">R$</button>
+        <button class="split-mode-btn ${mode==='pct'?'active':''}" onclick="setSplitMode(this,'pct')" type="button">%</button>
+      </div>
+      <input class="form-input" style="font-size:12px;padding:5px 8px;" type="number" step="0.01"
+        value="${mode==='pct'?pct:val}" placeholder="${mode==='pct'?'%':'0,00'}"
+        data-mode="${mode}" oninput="recalcSplit()">
+    </div>
+    <button class="icon-btn" onclick="removeSplitLine('${id}')" type="button" style="color:var(--red)">✕</button>`;
+  container.appendChild(div);
+}
+
+function setSplitMode(btn, mode) {
+  const line = btn.closest('.split-line');
+  line.querySelectorAll('.split-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const inp = line.querySelector('input[data-mode]');
+  inp.dataset.mode = mode;
+  inp.placeholder = mode === 'pct' ? '%' : '0,00';
+  inp.value = '';
+  recalcSplit();
+}
+
+function removeSplitLine(id) {
+  const lines = document.querySelectorAll('#split-lines .split-line');
+  if (lines.length <= 1) return;
+  document.getElementById(id).remove();
+  recalcSplit();
+}
+
+function recalcSplit() {
+  const total = parseFloat(document.getElementById('tx-value').value) || 0;
+  const lines = document.querySelectorAll('#split-lines .split-line');
+  let alocado = 0;
+  lines.forEach(line => {
+    const inp = line.querySelector('input[data-mode]');
+    const mode = inp.dataset.mode;
+    const v = parseFloat(inp.value) || 0;
+    alocado += mode === 'pct' ? (v / 100) * total : v;
+  });
+  const restante = total - alocado;
+  const aiEl = document.getElementById('split-alocado');
+  const riEl = document.getElementById('split-restante');
+  if (aiEl) aiEl.textContent = fmtBRL(alocado);
+  if (riEl) {
+    riEl.textContent = fmtBRL(Math.abs(restante));
+    riEl.style.color = Math.abs(restante) < 0.01 ? 'var(--green)' : 'var(--amber)';
+  }
+}
+
+function getSplits() {
+  const total = parseFloat(document.getElementById('tx-value').value) || 0;
+  const splits = [];
+  document.querySelectorAll('#split-lines .split-line').forEach(line => {
+    const cat = line.querySelector('select').value;
+    const inp = line.querySelector('input[data-mode]');
+    const mode = inp.dataset.mode;
+    const v = parseFloat(inp.value) || 0;
+    const value = mode === 'pct' ? parseFloat(((v / 100) * total).toFixed(2)) : v;
+    const pct = mode === 'pct' ? v : parseFloat(((v / total) * 100).toFixed(1));
+    splits.push({cat, value, pct, mode});
+  });
+  return splits;
+}
+
+// ── PARCELAS ────────────────────────────────────────────────────────────────
+function toggleParcelado() {
+  const checked = document.getElementById('tx-parcelado').checked;
+  document.getElementById('parcela-box').style.display = checked ? 'block' : 'none';
+  if (checked) recalcParcela();
+}
+
+function recalcParcela() {
+  const total = parseFloat(document.getElementById('tx-value').value) || 0;
+  const parc = parseInt(document.getElementById('tx-parc-total').value) || 1;
+  const atual = parseInt(document.getElementById('tx-parc-atual').value) || 1;
+  const valorParc = parseFloat((total / parc).toFixed(2));
+  document.getElementById('tx-parc-valor').value = valorParc;
+  document.getElementById('parcela-info').textContent =
+    `Parcela ${atual}/${parc} · R$ ${valorParc.toLocaleString('pt-BR',{minimumFractionDigits:2})} por mês · Total: ${fmtBRL(total)}`;
+}
+
+function recalcParcelaFromValor() {
+  const vp = parseFloat(document.getElementById('tx-parc-valor').value) || 0;
+  const parc = parseInt(document.getElementById('tx-parc-total').value) || 1;
+  const atual = parseInt(document.getElementById('tx-parc-atual').value) || 1;
+  document.getElementById('tx-value').value = (vp * parc).toFixed(2);
+  document.getElementById('parcela-info').textContent =
+    `Parcela ${atual}/${parc} · ${fmtBRL(vp)} por mês · Total: ${fmtBRL(vp*parc)}`;
+  recalcSplit();
 }
 
 function closeModal(type) {
@@ -1348,16 +1503,33 @@ function saveTx() {
   const desc = document.getElementById('tx-desc').value.trim();
   const value = parseFloat(document.getElementById('tx-value').value);
   const type = document.getElementById('tx-type').value;
-  const cat = document.getElementById('tx-cat-sel').value;
   const date = document.getElementById('tx-date').value;
   const conta = document.getElementById('tx-conta').value;
   const obs = document.getElementById('tx-obs').value;
   if (!desc || !value || !date) { showToast('Preencha todos os campos obrigatórios', '⚠'); return; }
+
+  const splits = getSplits();
+  const totalSplit = splits.reduce((s,sp)=>s+sp.value,0);
+  if (splits.length > 1 && Math.abs(totalSplit - value) > 0.05) {
+    showToast(`Soma das categorias (${fmtBRL(totalSplit)}) ≠ valor total (${fmtBRL(value)})`, '⚠'); return;
+  }
+  const cat = splits[0].cat;
+
+  let parcela = null;
+  if (document.getElementById('tx-parcelado').checked) {
+    parcela = {
+      atual: parseInt(document.getElementById('tx-parc-atual').value)||1,
+      total: parseInt(document.getElementById('tx-parc-total').value)||1,
+      valor: parseFloat(document.getElementById('tx-parc-valor').value)||value
+    };
+  }
+
+  const tx = {id: state.editId || Math.random().toString(36).slice(2), desc, value, type, cat, splits, date, conta, obs, parcela};
   if (state.editId) {
     const idx = state.transactions.findIndex(t=>t.id===state.editId);
-    if (idx >= 0) state.transactions[idx] = {id:state.editId,desc,value,type,cat,date,conta,obs};
+    if (idx >= 0) state.transactions[idx] = tx;
   } else {
-    state.transactions.push({id:Math.random().toString(36).slice(2),desc,value,type,cat,date,conta,obs});
+    state.transactions.push(tx);
   }
   saveToStorage();
   closeModal('add');
@@ -1416,27 +1588,69 @@ function dragOver(e) {
   e.preventDefault();
   document.getElementById('drop-zone').classList.add('drag');
 }
-
 function dragLeave() {
   document.getElementById('drop-zone').classList.remove('drag');
 }
-
-function dropFile(e) {
+function dropFiles(e) {
   e.preventDefault();
   dragLeave();
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 }
 
-function handleFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const text = e.target.result;
-    const parsed = parseCSV(text, file.name);
-    showPreview(parsed);
-  };
-  reader.readAsText(file, 'utf-8');
+async function handleFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+
+  const prog = document.getElementById('import-progress');
+  const progLabel = document.getElementById('progress-label');
+  const progCount = document.getElementById('progress-count');
+  const progFill = document.getElementById('progress-bar-fill');
+  prog.style.display = 'block';
+
+  let allTx = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    progLabel.textContent = `Processando: ${file.name}`;
+    progCount.textContent = `${i+1} / ${files.length}`;
+    progFill.style.width = `${Math.round(((i) / files.length) * 100)}%`;
+
+    const text = await readFileText(file);
+    const parsed = file.name.toLowerCase().endsWith('.ofx')
+      ? parseOFXText(text)
+      : parseCSV(text, file.name);
+    allTx = allTx.concat(parsed);
+  }
+
+  progFill.style.width = '100%';
+  progLabel.textContent = 'Removendo duplicatas...';
+
+  // Dedup contra si mesmo (arquivos sobrepostos)
+  const seen = new Set();
+  allTx = allTx.filter(tx => {
+    const key = `${tx.date}|${tx.desc}|${tx.value}|${tx.conta}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // Marca dups contra transações já salvas
+  const existingKeys = new Set(state.transactions.map(t => `${t.date}|${t.desc}|${t.value}|${t.conta}`));
+  allTx.forEach(tx => { tx._dup = existingKeys.has(`${tx.date}|${tx.desc}|${tx.value}|${tx.conta}`); });
+
+  const dups = allTx.filter(t=>t._dup).length;
+  progLabel.textContent = `${allTx.length} transações · ${dups} já existentes (marcadas)`;
+
+  setTimeout(() => { prog.style.display = 'none'; }, 3000);
+  showPreview(allTx);
+}
+
+function readFileText(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = () => rej(new Error('Erro ao ler arquivo'));
+    reader.readAsText(file, 'utf-8');
+  });
 }
 
 function parseCSV(text, filename) {
@@ -1452,7 +1666,9 @@ function parseCSV(text, filename) {
       const [date, , desc, valueStr] = cols;
       const value = parseFloat(valueStr.replace(',','.'));
       if (isNaN(value) || !date) return;
-      results.push({date: parseDate(date), desc, value: Math.abs(value), type: value > 0 ? 'entrada' : 'saida', cat: 'Outros', conta: 'Nubank'});
+      const tx = {date: parseDate(date), desc, value: Math.abs(value), type: value > 0 ? 'entrada' : 'saida', cat: 'Outros', conta: 'Nubank'};
+      tx.parcela = detectParcela(desc);
+      results.push(tx);
     });
   } else if (fname.includes('c6')) {
     // C6: Data;Histórico;Débito;Crédito;Saldo
@@ -1479,9 +1695,13 @@ function parseCSV(text, filename) {
       const value = Math.abs(parseFloat(valueRaw.replace(/[R$\s.]/g,'').replace(',','.')));
       if (isNaN(value)) return;
       const isNeg = valueRaw.includes('-');
-      results.push({date, desc, value, type: isNeg?'saida':'entrada', cat:'Outros', conta:'Importado'});
+      const tx = {date, desc, value, type: isNeg?'saida':'entrada', cat:'Outros', conta:'Importado'};
+      tx.parcela = detectParcela(desc);
+      results.push(tx);
     });
   }
+  // Detecta parcelas em todos os resultados
+  results.forEach(tx => { if (!tx.parcela) tx.parcela = detectParcela(tx.desc); });
   return results;
 }
 
@@ -1504,6 +1724,10 @@ function parseDate(str) {
 
 function parseOFX() {
   const text = document.getElementById('ofx-content').value;
+  showPreview(parseOFXText(text, 'OFX Manual'));
+}
+
+function parseOFXText(text, conta='Importado') {
   const results = [];
   const txRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi;
   let match;
@@ -1515,34 +1739,58 @@ function parseOFX() {
     const amount = parseFloat(get('TRNAMT').replace(',','.'));
     const desc = get('MEMO') || get('NAME') || 'Transação';
     if (!isNaN(amount)) {
-      results.push({date, desc, value: Math.abs(amount), type: amount<0?'saida':'entrada', cat:'Outros', conta:'Importado'});
+      const tx = {date, desc, value: Math.abs(amount), type: amount<0?'saida':'entrada', cat:'Outros', conta};
+      tx.parcela = detectParcela(desc);
+      if (tx.parcela) tx.cat = 'Outros';
+      results.push(tx);
     }
   }
-  showPreview(results);
+  return results;
+}
+
+// Detecta parcela no nome: "LOJA XYZ 03/12" ou "loja 3 de 12"
+function detectParcela(desc) {
+  const m1 = desc.match(/(\d{1,2})[\/_](\d{2,3})\s*$/);
+  const m2 = desc.match(/(\d+)\s*[Dd][Ee]\s*(\d+)/);
+  if (m1) return {atual: parseInt(m1[1]), total: parseInt(m1[2]), valor: 0};
+  if (m2) return {atual: parseInt(m2[1]), total: parseInt(m2[2]), valor: 0};
+  return null;
 }
 
 function showPreview(txs) {
   if (!txs.length) { showToast('Nenhuma transação detectada no arquivo', '⚠'); return; }
   window._importQueue = txs;
-  document.getElementById('preview-count').textContent = txs.length;
   const cats = Object.keys(CAT_COLORS);
-  const catOpts = cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-  document.getElementById('preview-body').innerHTML = txs.map((tx,i) => `
-    <tr>
+  const total = txs.length;
+  const dups = txs.filter(t=>t._dup).length;
+  const parcelas = txs.filter(t=>t.parcela).length;
+  document.getElementById('preview-count').textContent = total;
+  const statsEl = document.getElementById('import-stats');
+  if (statsEl) statsEl.innerHTML = [
+    `<span>📄 ${total} transações</span>`,
+    dups ? `<span style="color:var(--amber)">⚠ ${dups} já existentes</span>` : '<span style="color:var(--green)">✓ Sem duplicatas</span>',
+    parcelas ? `<span style="color:var(--purple)">💳 ${parcelas} parceladas detectadas</span>` : ''
+  ].join('&nbsp;&nbsp;');
+
+  document.getElementById('preview-body').innerHTML = txs.map((tx,i) => {
+    const isDup = tx._dup;
+    const parcelaTag = tx.parcela ? `<span style="font-size:10px;background:var(--purple-bg);color:var(--purple);padding:1px 5px;border-radius:3px;">${tx.parcela.atual}/${tx.parcela.total}x</span>` : '';
+    const col = tx.type==='entrada' ? 'var(--green)' : 'var(--red)';
+    const catOpts = cats.map(c=>`<option value="${c}" ${c===tx.cat?'selected':''}>${c}</option>`).join('');
+    const parc = tx.parcela ? `${tx.parcela.atual}/${tx.parcela.total}` : '—';
+    return `<tr class="${isDup?'dup-row':''}">
       <td><input type="date" value="${tx.date}" onchange="window._importQueue[${i}].date=this.value" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;"></td>
-      <td><input value="${tx.desc}" onchange="window._importQueue[${i}].desc=this.value" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;width:200px;font-family:'DM Sans',sans-serif;"></td>
-      <td style="font-family:'DM Mono',monospace;color:${tx.type==='entrada'?'var(--green)':'var(--red)'};">${tx.type==='entrada'?'+':'-'} ${fmtBRL(tx.value)}</td>
-      <td>
-        <select onchange="window._importQueue[${i}].cat=this.value" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;font-family:'DM Sans',sans-serif;">
-          ${cats.map(c=>`<option value="${c}" ${c===tx.cat?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </td>
+      <td><div style="display:flex;align-items:center;gap:4px;"><input value="${tx.desc.replace(/"/g,'&quot;')}" onchange="window._importQueue[${i}].desc=this.value" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;width:180px;font-family:'DM Sans',sans-serif;">${parcelaTag}</div></td>
+      <td style="font-family:'DM Mono',monospace;color:${col};white-space:nowrap;">${tx.type==='entrada'?'+':'-'} ${fmtBRL(tx.value)}</td>
+      <td><select onchange="window._importQueue[${i}].cat=this.value" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;">${catOpts}</select></td>
+      <td style="color:var(--purple);font-size:11px;font-family:'DM Mono',monospace;">${parc}</td>
       <td style="color:var(--text3);font-size:11px;">${tx.conta}</td>
-    </tr>`).join('');
+      <td>${isDup?'<span class="dup-badge">dup</span>':''}</td>
+    </tr>`;
+  }).join('');
   document.getElementById('import-preview').style.display = 'block';
   document.getElementById('import-preview').scrollIntoView({behavior:'smooth'});
 }
-
 function closePreview() {
   document.getElementById('import-preview').style.display = 'none';
   window._importQueue = [];
@@ -1569,21 +1817,29 @@ function categorizarLocal(desc) {
 }
 
 async function confirmImport() {
-  let txs = window._importQueue || [];
-  if (!txs.length) return;
+  let txs = (window._importQueue || []).filter(t => !t._dup || document.querySelector('#skip-dups')?.checked === false);
+  // Por padrão pula duplicatas
+  txs = txs.filter(t => !t._dup);
+  if (!txs.length) { showToast('Nenhuma transação nova para importar', '⚠'); return; }
 
-  // 1. Regras locais para o que veio como Outros
+  // 1. Regras locais
   txs.forEach(tx => {
     if (tx.cat === 'Outros' || !tx.cat) {
       const local = categorizarLocal(tx.desc);
       if (local) tx.cat = local;
     }
+    // Garante splits básico se não tiver
+    if (!tx.splits) tx.splits = [{cat: tx.cat, value: tx.value, mode: 'value', pct: 100}];
+    // Preenche valor da parcela se detectado
+    if (tx.parcela) tx.parcela.valor = tx.value;
   });
 
-  // 2. Ainda sobraram como Outros → chama IA
+  // 2. Restam como Outros → IA
   const semCat = txs.filter(t => t.cat === 'Outros' || !t.cat).length;
   if (semCat > 0) {
     txs = await categorizarComIA(txs);
+    // Atualiza splits com cat da IA
+    txs.forEach(tx => { if (!tx.splits || tx.splits.length===1) tx.splits = [{cat:tx.cat,value:tx.value,mode:'value',pct:100}]; });
   }
 
   txs.forEach(tx => {
@@ -1592,7 +1848,8 @@ async function confirmImport() {
   saveToStorage();
   closePreview();
   renderAll();
-  showToast(`${txs.length} transações importadas e categorizadas`);
+  const parc = txs.filter(t=>t.parcela).length;
+  showToast(`${txs.length} transações importadas${parc?' · '+parc+' parceladas':''}`);
   sendToSheets();
 }
 
