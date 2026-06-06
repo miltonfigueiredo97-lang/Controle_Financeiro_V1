@@ -1658,7 +1658,7 @@ function parseCSV(text, filename) {
   const results = [];
   const fname = filename.toLowerCase();
 
-  if (fname.includes('nu_') || fname.includes('nubank')) {
+  if (fname.startsWith('nu_') || (fname.includes('nu_') && !fname.startsWith('nubank_'))) {
     // Nubank conta corrente: Data,Valor,Identificador,Descrição
     lines.slice(1).forEach(line => {
       // CSV pode ter vírgulas dentro de campos — split simples funciona pois campos não têm aspas
@@ -1767,59 +1767,78 @@ function parseCSV(text, filename) {
     });
   } else if (fname.startsWith('nubank_') || fname.match(/^nubank_\d{4}/i)) {
     // Nubank CARTÃO DE CRÉDITO: date,title,"amount"
-    // Positivo = gasto, Negativo = estorno ou pagamento de fatura
+    // Positivo = gasto/cobrança, Negativo = estorno ou pagamento de fatura
     lines.slice(1).forEach(line => {
       if (!line.trim()) return;
-      const m = line.match(/^(\d{4}-\d{2}-\d{2}),(".*?"|[^,]*),(".*?"|[^,]*)$/);
-      if (!m) return;
-      const date = m[1];
-      const title = m[2].replace(/^"|"$/g,'').replace(/""/g,'"').trim();
-      const amountRaw = m[3].replace(/^"|"$/g,'').replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+      // Parser robusto: date é sempre YYYY-MM-DD, amount é sempre entre aspas no final
+      // formato: 2026-06-04,iFood - NuPay,"90,45"
+      const dateMatch = line.match(/^(\d{4}-\d{2}-\d{2}),/);
+      if (!dateMatch) return;
+      const date = dateMatch[1];
+      const rest = line.slice(date.length + 1); // remove "date,"
+      // amount é o último campo entre aspas: ,"valor" ou ,"-valor"
+      const amountMatch = rest.match(/,"([^"]+)"\s*$/);
+      if (!amountMatch) return;
+      const amountRaw = amountMatch[1]
+        .replace(/(-)\s+/, '$1')
+        .replace(/\.(?=\d{3})/g, '')
+        .replace(',', '.');
       const amount = parseFloat(amountRaw);
       if (isNaN(amount)) return;
+      // title é tudo entre a data e o amount
+      const title = rest.slice(0, rest.length - amountMatch[0].length)
+        .replace(/^"|"$/g,'').replace(/""/g,'"').trim();
 
-      // Pagamento de fatura e ajustes → ignora
+      // Pagamento de fatura → ignora (não é gasto)
       const tl = title.toLowerCase();
-      if (/pagamento recebido|ajuste a credito|valor pendente do mes|rotativo/.test(tl) && amount < 0) return;
       if (/pagamento recebido/.test(tl)) return;
+      // Valor pendente rotativo → ignora (é saldo anterior, não gasto novo)
+      if (/valor pendente do m|rotativo/.test(tl) && amount > 0) return;
+      // Ajuste a crédito → ignora
+      if (/ajuste a cr[eé]dito/.test(tl) && amount < 0) return;
 
-      const type = amount < 0 ? 'entrada' : 'saida'; // negativo = estorno
+      // Positivo = cobrança (saída), Negativo = estorno (entrada)
+      const type = amount > 0 ? 'saida' : 'entrada';
 
-      // Detecta parcela: "Parcela 7/10" ou "- 2/5" no final
+      // Detecta parcela: "Parcela 7/10" ou "- 2/5" no final ou "2/5" após hífen
       let cleanTitle = title;
       let parcela = null;
-      const pm1 = title.match(/[Pp]arcela\s+(\d+)\/(\d+)/);
-      const pm2 = title.match(/[\s-]+(\d+)\/(\d+)\s*$/);
+      const pm1 = title.match(/\s*-?\s*[Pp]arcela\s+(\d+)\/(\d+)/);
+      const pm2 = title.match(/\s+-\s+(\d+)\/(\d+)\s*$/);
+      const pm3 = title.match(/\s+(\d+)\/(\d+)\s*$/);
       if (pm1) {
         parcela = {atual: parseInt(pm1[1]), total: parseInt(pm1[2]), valor: Math.abs(amount)};
-        cleanTitle = title.replace(/\s*-?\s*[Pp]arcela\s+\d+\/\d+/,'').trim().replace(/\s*-\s*$/,'').trim();
+        cleanTitle = title.replace(pm1[0],'').trim();
       } else if (pm2) {
         parcela = {atual: parseInt(pm2[1]), total: parseInt(pm2[2]), valor: Math.abs(amount)};
-        cleanTitle = title.slice(0, pm2.index).trim().replace(/\s*-\s*$/,'').trim();
+        cleanTitle = title.slice(0, pm2.index).trim();
+      } else if (pm3) {
+        parcela = {atual: parseInt(pm3[1]), total: parseInt(pm3[2]), valor: Math.abs(amount)};
+        cleanTitle = title.slice(0, pm3.index).trim();
       }
 
-      // Limpa prefixos e sufixos comuns do Nubank crédito
+      // Limpa prefixos de operadoras e sufixos NuPay
       cleanTitle = cleanTitle
-        .replace(/^(Dl \*|Dl\*|Pag\*|Pg \*|Htm\*|S2p\*|Mlp \*|Ebw\*)/i, '')
+        .replace(/^(Dl \*|Dl\*|Pag\*|Pg \*|Htm\*|S2p\*|Mlp \*|Ebw\*|Meli\*|Mlp\*)/i, '')
         .replace(/\s*-\s*NuPay$/i, '')
-        .replace(/^Uberrides$/i, 'Uber')
-        .replace(/^Uberrides/i, 'Uber')
+        .replace(/^(Uberrides|Uber\*Rides|Uber\*rides)/i, 'Uber')
         .trim();
 
-      // IOF → agrupa como Serviços
+      // Categoria por tipo de lançamento especial
       let cat = 'Outros';
-      const iofMatch = cleanTitle.match(/IOF de "?([^"]+)"?/i);
-      if (iofMatch) {
-        cleanTitle = 'IOF - ' + iofMatch[1].trim();
-        cat = 'Serviços';
-      }
-      if (/juros de pagamento|rotativo/.test(tl)) { cat = 'Serviços'; }
+      if (/iof de|iof -/.test(tl)) cat = 'Serviços';
+      else if (/juros de pagamento|encargo|rotativo/.test(tl)) cat = 'Serviços';
+      else if (/pix no cr[eé]dito/.test(tl)) cat = 'Outros'; // IA vai categorizar pelo nome
+      // Extrai nome limpo do "Pix no Crédito - NOME"
+      const pixMatch = cleanTitle.match(/Pix no Cr[eé]dito - (.+)/i);
+      if (pixMatch) cleanTitle = 'Pix Crédito - ' + pixMatch[1].trim();
 
       const tx = {date, desc: cleanTitle, rawDesc: title, value: Math.abs(amount), type, cat, conta: 'Nubank Crédito'};
       tx.parcela = parcela || detectParcela(title);
       results.push(tx);
     });
   } else {
+    // Genérico: tenta separar por vírgula ou ponto-e-vírgula  } else {
     // Genérico: tenta separar por vírgula ou ponto-e-vírgula
     const sep = text.includes(';') ? ';' : ',';
     lines.slice(1).forEach(line => {
