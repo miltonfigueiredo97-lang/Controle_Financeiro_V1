@@ -438,6 +438,15 @@
       <!-- DASHBOARD -->
       <div class="page active" id="page-dashboard">
         <div class="cards-grid" id="summary-cards"></div>
+        <!-- Mini-orçamentos no dashboard -->
+        <div class="section-box" style="margin-bottom:14px;" id="dash-orcamentos-box">
+          <div class="section-header">
+            <span class="section-title">Orçamentos do mês</span>
+            <button class="btn" onclick="showPage('preparacao')">Configurar</button>
+          </div>
+          <div id="dash-orcamentos" style="padding:12px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
+        </div>
+
         <div class="section-row">
           <div class="section-box">
             <div class="section-header">
@@ -917,6 +926,1213 @@ const ORCAMENTOS_DEFAULT = {
 };
 
 // Categorias padrão
+const HISTORICO_MAPA = {
+  'uber uber * pending': 'Transporte Trabalho',
+  'uber* pending': 'Transporte Trabalho',
+  'uber uber * cancelar': 'Transporte Trabalho',
+  'uber *uber *trip sao paulo br': 'Transporte Trabalho',
+  '99app *99app': 'Transporte Trabalho',
+  'uber* trip': 'Transporte Trabalho',
+  'quintal dalina': 'Alimentação trabalho',
+  'uber uber *trip help.u': 'Transporte Trabalho',
+  'dl *uberrides': 'Transporte Trabalho',
+  'uber': 'Transporte Trabalho',
+  'mercado aliados santo andre bra': 'Alimentação trabalho',
+  'dl*uberrides': 'Transporte Trabalho',
+  'uber * pending': 'Transporte Trabalho',
+  'cozinha popular': 'Alimentação trabalho',
+  'r* pending': 'Transporte Trabalho',
+  '1x no crédito sem juros com nupay': 'Fim de Semana',
+  'google one': 'Moradia',
+  'amazon prime canais': 'Moradia',
+  'enel': 'Moradia',
+  'google youtube': 'Moradia',
+  'vivo': 'Moradia',
+  '99': 'Transporte Trabalho',
+  'momo rpg': 'Moradia',
+  'bella municipal': 'Alimentação trabalho',
+  'chrunchroll': 'Moradia',
+  'anthropic': 'Serviços',
+  'bas burguer': 'Fim de Semana',
+  'nupay de r$ 5,00': 'Transporte Trabalho',
+  'r * pending': 'Transporte Trabalho',
+  'oxxo': 'Extra Orçamento',
+  'ebn *spotify': 'Moradia',
+  'burger king': 'Alimentação trabalho',
+  'youtube premium': 'Moradia',
+  'sua academia': 'Academia',
+  'coop-cooperativa de c': 'Fim de Semana',
+  'ifood nupay de r$ 83,96': 'Extra Orçamento',
+  'mercado aliados': 'Alimentação trabalho',
+  'spotify': 'Moradia',
+  'google storage': 'Moradia',
+  '99app *99app sao paulo br': 'Transporte Trabalho',
+  'atualização cartão': 'Outros',
+  '3pasteis sbc': 'Alimentação trabalho',
+  'ifood *ifd*juliana p': 'Alimentação trabalho',
+  'ifood *ifood': 'Fim de Semana',
+  'copafer (sera reembolsado)': 'Extras do Trabalho',
+  'ingresso.com': 'Amor 😍',
+  'pizzariadon': 'Amor 😍',
+  'crunchroll': 'Moradia',
+  'mp *loteriasonlinelqq': 'Serviços',
+  'contador': 'Empresa',
+  'nupay de r$ 22,10': 'Transporte Trabalho',
+  'uber * pending sao paulo br': 'Fim de Semana',
+  'jeronimo lanche almoço': 'Extra Orçamento',
+  'oxxo sucos': 'Alimentação trabalho',
+  'almoço': 'Alimentação trabalho',
+  'nova rick doces gulose': 'Fim de Semana',
+  'nupay de r$ 22,94': 'Alimentação trabalho',
+  'uber one': 'Moradia',
+  'google crunchyroll an': 'Moradia',
+  'coop': 'Fim de Semana',
+  'remedios': 'Extra Orçamento',
+  'oxxo travessa municipa': 'Alimentação trabalho',
+  'coff.ee* shamrikf faces fifa': 'Lazer Pessoal',
+  'uber *trip help.uber.com': 'Transporte Trabalho',
+  'google crunchyroll': 'Moradia',
+  '59 barbearia': 'Moradia',
+  'ebn*spotify': 'Moradia',
+  'mp*milton': 'Outros',
+  'tekoa pago com credito': 'Outros',
+  'amazon ad free': 'Moradia',
+  'bas burguer (pago pelo pessoal)': 'Outros',
+  'dm *spotify': 'Moradia',
+  'rp skin  2/3': 'Outros',
+  'rp skin  3/3': 'Outros',
+  'gamepass': 'Moradia',
+  'academia': 'Moradia',
+  'despesa de ajuste': 'Outros',
+  'almoço santa carolina': 'Extra Orçamento',
+  'jeronimotsales': 'Alimentação trabalho',
+  'nupay de r$ 22,60': 'Transporte Trabalho',
+  'nupay de r$ 65,99': 'Alimentação trabalho',
+  'pag*riotgame': 'Outros',
+  'ifd*arcos dourados com': 'Extra Orçamento',
+  'mp *loteriasonlinempp': 'Serviços',
+  'flexpag *enelsp': 'Moradia',
+  'cinemark brasil (pago pelo pessoal)': 'Amor 😍',
+  'deepl* sub': 'Era Pra Gastar Com Isso? Porra',
+  'dl *uber*rides': 'Transporte Trabalho',
+  'amazon ad free for pri': 'Moradia',
+  'dc comercio de fondue': 'Amor 😍',
+  'ajuste': 'Outros',
+  'mp*loteriasonlineedwl': 'Serviços',
+  '99food *outback - plaza s': 'Alimentação trabalho',
+  '99food *mcdonalds - prest': 'Alimentação trabalho',
+  'ifd*kennedy gastrobar ltd': 'Alimentação trabalho',
+  'pb kids brinquedos': 'Lazer Pessoal',
+  'burguer arte (pago pelo pessoal)': 'Outros',
+  'shopping abc': 'Fim de Semana',
+  'ntal dalina': 'Extra Orçamento',
+  'nupay de r$ 22,40': 'Transporte Trabalho',
+  'ifd*outback steakhouse': 'Alimentação trabalho',
+  'carrefour senador flaq': 'Fim de Semana',
+  'muquiranas restaurante': 'Fim de Semana',
+  'almoco supergrill mestre': 'Alimentação trabalho',
+  'gelinho (olho de gato)': 'Extra Orçamento',
+  'mercado pago cartão': 'Outros',
+  'nupay de r$ 20,40': 'Transporte Trabalho',
+  'mac donalds af': 'Fim de Semana',
+  'nupay de r$ 20,30': 'Transporte Trabalho',
+  '38275379lucas': 'Alimentação trabalho',
+  '99 tecnologia*99*': 'Transporte Trabalho',
+  'almoco shopping': 'Extra Orçamento',
+  'hamburguer': 'Fim de Semana',
+  'leonardo.ai': 'Extra Orçamento',
+  'bk almoco': 'Alimentação trabalho',
+  'livro barbara': 'Amor 😍',
+  'bar metropolis': 'Extra Orçamento',
+  'pg *wix gggstore.com.': 'Lazer Pessoal',
+  'nupay de r$ 14,95': 'Alimentação trabalho',
+  'nupay de r$ 23,90': 'Transporte Trabalho',
+  'drogaria sao paulo 406': 'Outros',
+  'mp *loteriasonlinewt5': 'Serviços',
+  '99food *cookie da house p': 'Alimentação trabalho',
+  'google.': 'Outros',
+  'nupay de r$ 102,40': 'Extra Orçamento',
+  'pdv*hokkaido cream': 'Extra Orçamento',
+  'haddock lobo cozinha m': 'Extra Orçamento',
+  'nagumo': 'Extra Orçamento',
+  'clube do ingresso ltda': 'Outros',
+  'nupay de r$ 28,90': 'Transporte Trabalho',
+  'carregador samsung adicional': 'Lazer Pessoal',
+  '99food *marlene steak hou': 'Alimentação trabalho',
+  'pag*steam': 'Outros',
+  'nupay de r$ 19,60': 'Transporte Trabalho',
+  '99pay': 'Outros',
+  'caminho dos reis': 'Era Pra Gastar Com Isso? Porra',
+  '99food *bar do bolinho pe': 'Alimentação trabalho',
+  'chaveiroconfi': 'Extras do Trabalho',
+  '99food *don viana-deliver': 'Alimentação trabalho',
+  'metropole 118': 'Amor 😍',
+  'mp*loteriasonlinewkfn': 'Transporte Trabalho',
+  'loteria': 'Serviços',
+  'outback abc mall st. a': 'Amor 😍',
+  'cabana burger santo an': 'Amor 😍',
+  '99food *sayoto sushi deli': 'Alimentação trabalho',
+  'nupay de r$ 19,00': 'Transporte Trabalho',
+  'nupay de r$ 20,20': 'Transporte Trabalho',
+  'nupay de r$ 25,50': 'Transporte Trabalho',
+  'www.tenorshare.com': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 20,80': 'Transporte Trabalho',
+  'nupay de r$ 88,20': 'Alimentação trabalho',
+  'nupay de r$ 26,70': 'Transporte Trabalho',
+  'nupay de r$ 24,50': 'Transporte Trabalho',
+  'sukiya santo andre': 'Fim de Semana',
+  'netflix.com': 'Moradia',
+  'giuliana comercio de f  1/3': 'Amor 😍',
+  'giuliana comercio de f  2/3': 'Amor 😍',
+  'giuliana comercio de f  3/3': 'Amor 😍',
+  'fcm 26': 'Era Pra Gastar Com Isso? Porra',
+  'amazonprimebr': 'Moradia',
+  'nupay de r$ 27,10': 'Transporte Trabalho',
+  'nupay de r$ 43,78': 'Alimentação trabalho',
+  'cinemark brasil': 'Fim de Semana',
+  'nupay de r$ 21,60': 'Transporte Trabalho',
+  'nupay de r$ 42,79': 'Alimentação trabalho',
+  '*kennedy gastrobar ltd': 'Alimentação trabalho',
+  'nupay de r$ 21,00': 'Transporte Trabalho',
+  'ifd*zensho do brasil c': 'Alimentação trabalho',
+  'ifd*juliana prado soar': 'Alimentação trabalho',
+  'ifd*sueli sueco arakak': 'Extra Orçamento',
+  'breno rpg': 'Moradia',
+  'oficio da pizza': 'Fim de Semana',
+  'miltondeca???': 'Outros',
+  'nupay de r$ 50,89': 'Alimentação trabalho',
+  'bicho': 'Alimentação trabalho',
+  'nupay de r$ 21,40': 'Transporte Trabalho',
+  'nupay de r$ 20,61': 'Transporte Trabalho',
+  'minimercado petropolis': 'Alimentação trabalho',
+  'almoço fim de semana': 'Fim de Semana',
+  'remini.ai': 'Extra Orçamento',
+  'restaurante e churras': 'Outros',
+  'mp *clickbus': 'Extra Orçamento',
+  'coop-cooperativa santo andre br': 'Fim de Semana',
+  'vivo fibra': 'Moradia',
+  'burguer king': 'Extra Orçamento',
+  'bas burguer (pago pela galera)': 'Outros',
+  'divino fogao': 'Alimentação trabalho',
+  'almoço chimay': 'Alimentação trabalho',
+  'claude.ai subscription': 'Serviços',
+  'google predict the wi': 'Serviços',
+  'hbh ltda': 'Extra Orçamento',
+  'lojas kangkang ltda': 'Amor 😍',
+  'mp *loteriasonlinea6e': 'Alimentação trabalho',
+  'sondo': 'Alimentação trabalho',
+  'mp *loteriasonline9my': 'Alimentação trabalho',
+  'otaviano restaurante': 'Fim de Semana',
+  'nupay de r$ 22,96': 'Alimentação trabalho',
+  'nupay de r$ 21,95': 'Alimentação trabalho',
+  'nupay de r$ 106,84': 'Alimentação trabalho',
+  'nupay de r$ 121,95': 'Alimentação trabalho',
+  'nupay de r$ 115,96': 'Alimentação trabalho',
+  'nupay de r$ 33,95': 'Alimentação trabalho',
+  'nupay de r$ 32,96': 'Alimentação trabalho',
+  'nupay de r$ 25,94': 'Alimentação trabalho',
+  'nupay de r$ 113,95': 'Alimentação trabalho',
+  'nupay de r$ 104,58': 'Alimentação trabalho',
+  'nupay de r$ 13,94': 'Alimentação trabalho',
+  'nupay de r$ 12,94': 'Alimentação trabalho',
+  'nupay de r$ 124,95': 'Alimentação trabalho',
+  'nupay de r$ 129,94': 'Alimentação trabalho',
+  'nupay de r$ 22,95': 'Alimentação trabalho',
+  'nupay de r$ 253,88': 'Alimentação trabalho',
+  'nupay de r$ 15,95': 'Alimentação trabalho',
+  'nupay de r$ 15,96': 'Alimentação trabalho',
+  'ponto mgm': 'Extra Orçamento',
+  'nupay de r$ 74,93': 'Alimentação trabalho',
+  'nupay de r$ 55,70': 'Alimentação trabalho',
+  'nupay de r$ 39,95': 'Alimentação trabalho',
+  'nupay de r$ 108,98': 'Alimentação trabalho',
+  'nupay de r$ 108,90': 'Alimentação trabalho',
+  'nupay de r$ 44,29': 'Alimentação trabalho',
+  'nupay de r$ 22,93': 'Alimentação trabalho',
+  'nupay de r$ 31,20': 'Alimentação trabalho',
+  'nupay de r$ 31,94': 'Alimentação trabalho',
+  'nupay de r$ 28,95': 'Alimentação trabalho',
+  'nupay de r$ 57,04': 'Alimentação trabalho',
+  'nupay de r$ 29,95': 'Alimentação trabalho',
+  'nupay de r$ 117,93': 'Alimentação trabalho',
+  'nupay de r$ 217,53': 'Alimentação trabalho',
+  'my blend burguer e dri': 'Extra Orçamento',
+  'mac donalds': 'Alimentação trabalho',
+  'os sushi abc ltda': 'Fim de Semana',
+  'riachuelo': 'Lazer Pessoal',
+  'shopping metropole': 'Fim de Semana',
+  'carrefour shopping metr': 'Fim de Semana',
+  'capa tablet  1/2': 'Lazer Pessoal',
+  'nupay de r$ 87,87': 'Alimentação trabalho',
+  'nupay de r$ 92,28': 'Fim de Semana',
+  'lanche equipe ( sera pago)': 'Outros',
+  'galo cego': 'Alimentação trabalho',
+  'oculos escuro volei  1/4': 'Lazer Pessoal',
+  'nupay de r$ 25,60': 'Alimentação trabalho',
+  'nupay de r$ 90,38': 'Alimentação trabalho',
+  'mp *miltonfigueir': 'Outros',
+  'pag hip ip  1/5': 'Outros',
+  'pag hip ip  2/5': 'Outros',
+  'pag hip ip  3/5': 'Outros',
+  'pag hip ip  4/5': 'Outros',
+  'pag hip ip  5/5': 'Outros',
+  'mercado livre  1/3': 'Extra Orçamento',
+  'mercado livre  2/3': 'Outros',
+  'mercado livre  3/3': 'Extra Orçamento',
+  'steam  1/2': 'Outros',
+  'steam  2/2': 'Outros',
+  'curso amor  1/3': 'Outros',
+  'curso amor  2/3': 'Outros',
+  'curso amor  3/3': 'Outros',
+  'gogoz patch  1/2': 'Outros',
+  'gogoz patch  2/2': 'Outros',
+  'consulta cema': 'Outros',
+  'beco golden': 'Amor 😍',
+  'renan marmita': 'Alimentação trabalho',
+  'solo leveling volume 11': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 52,56': 'Alimentação trabalho',
+  'sunlitman  1/5': 'Lazer Pessoal',
+  'sunlitman  2/5': 'Lazer Pessoal',
+  'sunlitman  3/5': 'Lazer Pessoal',
+  'sunlitman  4/5': 'Lazer Pessoal',
+  'sunlitman  5/5': 'Lazer Pessoal',
+  'nupay de r$ 54,55': 'Alimentação trabalho',
+  'nupay de r$ 25,75': 'Transporte Trabalho',
+  'nupay de r$ 56,60': 'Alimentação trabalho',
+  'nupay de r$ 26,40': 'Fim de Semana',
+  'mooca shopping': 'Fim de Semana',
+  'kalunga shop*kalunga 0': 'Outros',
+  'nupay de r$ 76,99': 'Fim de Semana',
+  'mp *loteriasonline583': 'Serviços',
+  'nupay de r$ 40,95': 'Transporte Trabalho',
+  'coco bambu conceito sa': 'Amor 😍',
+  'nupay de r$ 30,00': 'Transporte Trabalho',
+  'nupay de r$ 53,78': 'Alimentação trabalho',
+  'mp*loteriasonlinem1aq': 'Serviços',
+  'mp *loteriasonlinefke': 'Serviços',
+  'nupay de r$ 51,89': 'Alimentação trabalho',
+  'nupay de r$ 37,00': 'Transporte Trabalho',
+  'nupay de r$ 48,88': 'Alimentação trabalho',
+  'nupay de r$ 118,05  1/2': 'Fim de Semana',
+  'nupay de r$ 118,05  2/2': 'Fim de Semana',
+  'nupay de r$ 88,28': 'Fim de Semana',
+  'shopee *eneideias pkmn  1/5': 'Lazer Pessoal',
+  'shopee *eneideias pkmn  2/5': 'Lazer Pessoal',
+  'shopee *eneideias pkmn  3/5': 'Lazer Pessoal',
+  'shopee *eneideias pkmn  4/5': 'Lazer Pessoal',
+  'shopee *eneideias pkmn  5/5': 'Lazer Pessoal',
+  'restaurante tasty gril': 'Fim de Semana',
+  'nupay de r$ 53,88': 'Alimentação trabalho',
+  'nupay de r$ 123,10': 'Alimentação trabalho',
+  'nupay de r$ 51,92': 'Alimentação trabalho',
+  '99food *kennedy gastrobar': 'Alimentação trabalho',
+  'kiswe* bmthlivestream': 'Transporte Trabalho',
+  'nupay de r$ 31,70': 'Alimentação trabalho',
+  'ifd*syrian food santo': 'Moradia',
+  'ifd*vanderlei hernane': 'Fim de Semana',
+  'nupay de r$ 47,93': 'Alimentação trabalho',
+  's2p*2gogoszpatch': 'Transporte Trabalho',
+  '99food *restaurante grill': 'Alimentação trabalho',
+  '99food *bar figueiras pen': 'Alimentação trabalho',
+  'mp*loteriasonline47g0': 'Serviços',
+  'power bank  1/2': 'Lazer Pessoal',
+  'power bank  2/2': 'Lazer Pessoal',
+  'mp*loteriasonlinewu0r': 'Transporte Trabalho',
+  'nupay de r$ 53,39': 'Alimentação trabalho',
+  'nupay de r$ 210,69': 'Alimentação trabalho',
+  'mp*loteriasonlineycqs': 'Transporte Trabalho',
+  '99food *baeta grill - chu': 'Alimentação trabalho',
+  'g2abvshop': 'Transporte Trabalho',
+  'fone galaxy bud core  1/8': 'Lazer Pessoal',
+  'fone galaxy bud core  2/8': 'Lazer Pessoal',
+  'fone galaxy bud core  3/8': 'Lazer Pessoal',
+  'fone galaxy bud core  4/8': 'Lazer Pessoal',
+  'fone galaxy bud core  5/8': 'Lazer Pessoal',
+  'fone galaxy bud core  6/8': 'Lazer Pessoal',
+  'fone galaxy bud core  7/8': 'Lazer Pessoal',
+  'fone galaxy bud core  8/8': 'Lazer Pessoal',
+  'nupay de r$ 42,60': 'Alimentação trabalho',
+  'nupay de r$ 52,43': 'Alimentação trabalho',
+  'mp *loteriasonlined4l': 'Serviços',
+  'nupay de r$ 79,28': 'Alimentação trabalho',
+  'dl*google donna': 'Moradia',
+  'mp *loteriasonlinefpg': 'Serviços',
+  'nupay de r$ 49,33': 'Alimentação trabalho',
+  'nupay de r$ 76,19': 'Alimentação trabalho',
+  'nupay de r$ 50,76': 'Alimentação trabalho',
+  'nupay de r$ 25,14': 'Transporte Trabalho',
+  'nupay de r$ 60,95': 'Alimentação trabalho',
+  'nupay de r$ 36,89': 'Fim de Semana',
+  'fabio bas': 'Fim de Semana',
+  'mp *loteriasonline0j2': 'Serviços',
+  'nupay de r$ 72,19': 'Alimentação trabalho',
+  'bomboss doces ltda': 'Amor 😍',
+  'brazillian': 'Amor 😍',
+  'nupay de r$ 74,60': 'Alimentação trabalho',
+  'mp *loteriasonlinegbk': 'Serviços',
+  'mp *loteriasonline4u5': 'Serviços',
+  'barbearia 59': 'Moradia',
+  'nupay de r$ 40,98': 'Alimentação trabalho',
+  'nupay de r$ 53,55': 'Alimentação trabalho',
+  'arcanine figure': 'Era Pra Gastar Com Isso? Porra',
+  'mp *loteriasonline3t6': 'Serviços',
+  'nupay de r$ 116,65': 'Fim de Semana',
+  'nupay de r$ 65,10': 'Amor 😍',
+  'nupay de r$ 36,99': 'Alimentação trabalho',
+  'nupay de r$ 49,00': 'Alimentação trabalho',
+  'mp *loteriasonlinetq1': 'Serviços',
+  'efi*lovepanda': 'Amor 😍',
+  'nupay de r$ 111,00': 'Alimentação trabalho',
+  'nupay de r$ 105,80': 'Alimentação trabalho',
+  'nupay de r$ 97,29': 'Alimentação trabalho',
+  'tornozeleira  1/2': 'Era Pra Gastar Com Isso? Porra',
+  'tornozeleira  2/2': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 96,28': 'Alimentação trabalho',
+  'radio obra, sera reembolsado': 'Outros',
+  'nupay de r$ 19,30': 'Alimentação trabalho',
+  'nupay de r$ 7,73': 'Alimentação trabalho',
+  'mp *loteriasonlinemvu': 'Serviços',
+  'mp *loteriasonlinemho': 'Serviços',
+  'nupay de r$ 100,00': 'Alimentação trabalho',
+  '99food *churras do gu pen': 'Alimentação trabalho',
+  '99food *bolos doces by': 'Alimentação trabalho',
+  '99food *marmitaria milane': 'Alimentação trabalho',
+  'gohan sushi restaurant': 'Fim de Semana',
+  'reserva paulista admin': 'Transporte Trabalho',
+  'zoospecommerceparq': 'Transporte Trabalho',
+  'nupay de r$ 28,40': 'Alimentação trabalho',
+  'mp *loteriasonline5dm': 'Transporte Trabalho',
+  'nupay de r$ 49,24': 'Alimentação trabalho',
+  'aloha': 'Transporte Trabalho',
+  'nupay de r$ 50,67': 'Alimentação trabalho',
+  'nupay de r$ 155,70': 'Alimentação trabalho',
+  'nupay de r$ 80,29': 'Alimentação trabalho',
+  'mp*loteriasonlinevha3': 'Transporte Trabalho',
+  '99food *zano sushi pendin': 'Amor 😍',
+  'htm*larissa kiefer-': 'Transporte Trabalho',
+  'mp*loteriasonline7arx': 'Transporte Trabalho',
+  'riachuelo  1/3': 'Lazer Pessoal',
+  'riachuelo  2/3': 'Lazer Pessoal',
+  'riachuelo  3/3': 'Lazer Pessoal',
+  'nupay de r$ 100,78': 'Alimentação trabalho',
+  'nupay de r$ 89,93': 'Alimentação trabalho',
+  '99food *restaurante pops': 'Alimentação trabalho',
+  'nupay de r$ 38,83': 'Alimentação trabalho',
+  'nupay de r$ 59,85': 'Alimentação trabalho',
+  'nupay de r$ 68,00': 'Amor 😍',
+  'nupay de r$ 45,69': 'Amor 😍',
+  'ofner shop. abc': 'Fim de Semana',
+  'amazonmktplc*boaviagem': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 110,78': 'Fim de Semana',
+  'nupay de r$ 96,48': 'Fim de Semana',
+  'mp *loteriasonlinen4z': 'Serviços',
+  'ri happy brinquedos sa': 'Era Pra Gastar Com Isso? Porra',
+  'horizonte restaurante': 'Fim de Semana',
+  'boliche shopping atr': 'Fim de Semana',
+  'mp *loteriasonlinecwc': 'Serviços',
+  'nupay de r$ 51,38': 'Outros',
+  'nupay de r$ 72,93': 'Alimentação trabalho',
+  'mp *loteriasonlineay4': 'Serviços',
+  'nupay de r$ 69,42': 'Alimentação trabalho',
+  'mp *loteriasonline9k8': 'Serviços',
+  'mp *loteriasonlineme1': 'Serviços',
+  'mercado livre mestre (pago)  1/4': 'Outros',
+  'mercado livre mestre (pago)  2/4': 'Outros',
+  'mercado livre mestre (pago)  3/4': 'Outros',
+  'mercado livre mestre (pago)  4/4': 'Outros',
+  'zanon\'s sbc comercio v': 'Amor 😍',
+  'mp *loteriasonline5pp': 'Serviços',
+  'nupay de r$ 74,01': 'Alimentação trabalho',
+  'cartas pkmm  1/3': 'Era Pra Gastar Com Isso? Porra',
+  'cartas pkmm  2/3': 'Era Pra Gastar Com Isso? Porra',
+  'cartas pkmm  3/3': 'Era Pra Gastar Com Isso? Porra',
+  'pkmn': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 62,34': 'Alimentação trabalho',
+  'leitor de luz amorzin': 'Amor 😍',
+  'quadripack': 'Era Pra Gastar Com Isso? Porra',
+  'burger factory hamburgu': 'Amor 😍',
+  '99food *rei do bai o pend': 'Alimentação trabalho',
+  '99food *fazenda macaxeira': 'Extra Orçamento',
+  'nupay de r$ 135,02  1/2': 'Alimentação trabalho',
+  'nupay de r$ 135,02  2/2': 'Alimentação trabalho',
+  'mp*loteriasonline9n4l': 'Serviços',
+  'mp*loteriasonlinedpf0': 'Serviços',
+  '99food * qosq fan b rgue': 'Extra Orçamento',
+  '99food *caf sa de pendin': 'Alimentação trabalho',
+  '99food *outback - gran pl': 'Alimentação trabalho',
+  'nupay de r$ 23,99': 'Alimentação trabalho',
+  'mp *loteriasonlinelad': 'Serviços',
+  'rp skin viego  1/4': 'Era Pra Gastar Com Isso? Porra',
+  'rp skin viego  2/4': 'Era Pra Gastar Com Isso? Porra',
+  'rp skin viego  3/4': 'Era Pra Gastar Com Isso? Porra',
+  'rp skin viego  4/4': 'Era Pra Gastar Com Isso? Porra',
+  'dl*bonoxsbr': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 17,70': 'Transporte Trabalho',
+  'nupay de r$ 90,30': 'Alimentação trabalho',
+  'mp *loteriasonlinex1f': 'Serviços',
+  'nupay de r$ 72,14': 'Alimentação trabalho',
+  'mp *loteriasonlineocz': 'Serviços',
+  'nupay de r$ 9,69': 'Transporte Trabalho',
+  'nupay de r$ 52,49': 'Alimentação trabalho',
+  'lojas americanas 1029': 'Amor 😍',
+  'pix milton': 'Outros',
+  'mp *loteriasonlineax3': 'Serviços',
+  'mp *loteriasonlined1q': 'Serviços',
+  'ritmo de guerra  1/4': 'Lazer Pessoal',
+  'ritmo de guerra  2/4': 'Lazer Pessoal',
+  'ritmo de guerra  3/4': 'Lazer Pessoal',
+  'ritmo de guerra  4/4': 'Lazer Pessoal',
+  'projetor tv  1/2': 'Era Pra Gastar Com Isso? Porra',
+  'projetor tv  2/2': 'Era Pra Gastar Com Isso? Porra',
+  'ivi gateway pix': 'Outros',
+  'spotfy': 'Moradia',
+  'nupay de r$ 48,34': 'Alimentação trabalho',
+  'mp *loteriasonlinel8a': 'Serviços',
+  'nupay de r$ 23,20': 'Transporte Trabalho',
+  'shopee *ktstore  1/2': 'Amor 😍',
+  'shopee *ktstore  2/2': 'Amor 😍',
+  'nupay de r$ 82,00': 'Alimentação trabalho',
+  'mp *loteriasonlinenxs': 'Serviços',
+  'mp *loteriasonlinensn': 'Serviços',
+  'nupay de r$ 36,84': 'Alimentação trabalho',
+  'mp *loteriasonlinevvy': 'Serviços',
+  'nupay de r$ 89,99': 'Alimentação trabalho',
+  'mp *loteriasonlinenlu': 'Serviços',
+  'nupay de r$ 19,66': 'Transporte Trabalho',
+  'mp *loteriasonlinez8w': 'Serviços',
+  'pizzaria gigui': 'Fim de Semana',
+  'mp *loteriasonline4xd': 'Serviços',
+  'mp *loteriasonlinee68': 'Serviços',
+  'nupay de r$ 62,52': 'Alimentação trabalho',
+  'nupay de r$ 22,99': 'Alimentação trabalho',
+  'mp *loteriasonlineidz': 'Serviços',
+  'nupay de r$ 110,04': 'Extra Orçamento',
+  'mp *loteriasonlinerwo': 'Serviços',
+  'mp *loteriasonlineg95': 'Serviços',
+  'nupay de r$ 7,20': 'Extra Orçamento',
+  'nupay de r$ 72,00': 'Amor 😍',
+  '99food *cabana burger - s': 'Extra Orçamento',
+  'perfectpay*gogosz patc  1/3': 'Lazer Pessoal',
+  'perfectpay*gogosz patc  2/3': 'Lazer Pessoal',
+  'perfectpay*gogosz patc  3/3': 'Lazer Pessoal',
+  'mp*loteriasonlinepaey': 'Serviços',
+  'google': 'Outros',
+  'cabo 2m carregador': 'Lazer Pessoal',
+  'mp*loteriasonlineslqy': 'Serviços',
+  'gabinete galaxy standard v2  1/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  10/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  2/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  3/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  4/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  5/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  6/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  7/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  8/10': 'Lazer Pessoal',
+  'gabinete galaxy standard v2  9/10': 'Lazer Pessoal',
+  '99food *churrascaria star': 'Alimentação trabalho',
+  'bone raimundo  1/4': 'Outros',
+  'bone raimundo  2/4': 'Outros',
+  'bone raimundo  3/4': 'Outros',
+  'bone raimundo  4/4': 'Outros',
+  'dl *aliexpress br alip (powerbank)  1/4': 'Amor 😍',
+  'dl *aliexpress br alip (powerbank)  2/4': 'Amor 😍',
+  'dl *aliexpress br alip (powerbank)  3/4': 'Amor 😍',
+  'dl *aliexpress br alip (powerbank)  4/4': 'Amor 😍',
+  'mp*loteriasonline3ti3': 'Serviços',
+  'art crea': 'Outros',
+  'crea (registro empresa)': 'Outros',
+  'g2a autocad  1/3': 'Outros',
+  'g2a autocad  2/3': 'Outros',
+  'g2a autocad  3/3': 'Outros',
+  '99food *joe robert hambur': 'Extra Orçamento',
+  'nupay de r$ 77,28': 'Extra Orçamento',
+  'nupay de r$ 55,98': 'Alimentação trabalho',
+  'nupay de r$ 22,80': 'Transporte Trabalho',
+  'coca cola': 'Outros',
+  'nupay de r$ 53,50': 'Transporte Trabalho',
+  'ssd sera pago pelo pai do matheus  1/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  10/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  11/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  2/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  3/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  4/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  5/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  6/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  7/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  8/11': 'Outros',
+  'ssd sera pago pelo pai do matheus  9/11': 'Outros',
+  'mouse atack x11  1/3': 'Lazer Pessoal',
+  'mouse atack x11  2/3': 'Lazer Pessoal',
+  'mouse atack x11  3/3': 'Lazer Pessoal',
+  'cesta glasser  1/2': 'Outros',
+  'cesta glasser  2/2': 'Outros',
+  'nupay de r$ 37,83': 'Alimentação trabalho',
+  'nupay de r$ 60,21': 'Amor 😍',
+  'nupay de r$ 83,38': 'Fim de Semana',
+  'acqua filtros': 'Extras do Trabalho',
+  'carregador samsung  1/2': 'Lazer Pessoal',
+  'carregador samsung  2/2': 'Lazer Pessoal',
+  'galo coca cola': 'Outros',
+  'ad free amazon': 'Moradia',
+  'nupay de r$ 27,01': 'Alimentação trabalho',
+  'nupay de r$ 72,68': 'Alimentação trabalho',
+  'nupay de r$ 27,52': 'Transporte Trabalho',
+  'nupay de r$ 46,11': 'Alimentação trabalho',
+  'oggi vanderlei': 'Fim de Semana',
+  'pagamento unitv': 'Moradia',
+  'sacramentadora editora  1/4': 'Lazer Pessoal',
+  'sacramentadora editora  2/4': 'Lazer Pessoal',
+  'sacramentadora editora  3/4': 'Lazer Pessoal',
+  'sacramentadora editora  4/4': 'Lazer Pessoal',
+  'nupay de r$ 76,38': 'Fim de Semana',
+  'nupay de r$ 65,39': 'Alimentação trabalho',
+  'nupay de r$ 22,70': 'Transporte Trabalho',
+  'nupay de r$ 48,40': 'Amor 😍',
+  'nupay de r$ 41,59': 'Extra Orçamento',
+  'nupay de r$ 57,78': 'Extra Orçamento',
+  'nupay de r$ 89,62  1/2': 'Extra Orçamento',
+  'nupay de r$ 89,62  2/2': 'Extra Orçamento',
+  'combo de pacotes prismatic': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 175,89  1/2': 'Extra Orçamento',
+  'nupay de r$ 175,89  2/2': 'Extra Orçamento',
+  'nupay de r$ 45,59': 'Extra Orçamento',
+  'fifa 26': 'Lazer Pessoal',
+  'nupay de r$ 36,90': 'Extra Orçamento',
+  'nupay de r$ 135,05  1/2': 'Extra Orçamento',
+  'nupay de r$ 135,05  2/2': 'Extra Orçamento',
+  'chaves (sera reembolsado)': 'Outros',
+  'nupay de r$ 22,20': 'Extra Orçamento',
+  'capa notebook  1/3': 'Extra Orçamento',
+  'capa notebook  2/3': 'Extra Orçamento',
+  'capa notebook  3/3': 'Extra Orçamento',
+  'jeronimo sorvete': 'Amor 😍',
+  'bolsa notebook': 'Outros',
+  'base cooler': 'Lazer Pessoal',
+  'nupay de r$ 24,30': 'Extra Orçamento',
+  'ifd*leal e marangoni ltda': 'Extra Orçamento',
+  'nupay de r$ 24,90': 'Extra Orçamento',
+  'cea sbg 114 ecpc': 'Amor 😍',
+  'app *brainjuice  1/3': 'Moradia',
+  'app *brainjuice  2/3': 'Moradia',
+  'app *brainjuice  3/3': 'Moradia',
+  'nupay de r$ 31,79': 'Alimentação trabalho',
+  'nupay de r$ 107,39  1/2': 'Alimentação trabalho',
+  'nupay de r$ 107,39  2/2': 'Alimentação trabalho',
+  'marzuchi glaceados': 'Fim de Semana',
+  'nupay de r$ 57,68': 'Alimentação trabalho',
+  'pokemon prismatic  1/6': 'Lazer Pessoal',
+  'pokemon prismatic  2/6': 'Lazer Pessoal',
+  'pokemon prismatic  3/6': 'Lazer Pessoal',
+  'pokemon prismatic  4/6': 'Lazer Pessoal',
+  'pokemon prismatic  5/6': 'Lazer Pessoal',
+  'pokemon prismatic  6/6': 'Lazer Pessoal',
+  'nupay de r$ 27,00': 'Transporte Trabalho',
+  'combo de pacotes prim,fog e raio  1/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  10/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  2/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  3/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  4/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  5/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  6/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  7/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  8/10': 'Lazer Pessoal',
+  'combo de pacotes prim,fog e raio  9/10': 'Lazer Pessoal',
+  'nupay de r$ 76,69': 'Alimentação trabalho',
+  'nupay de r$ 71,59': 'Alimentação trabalho',
+  'nupay de r$ 13,40': 'Transporte Trabalho',
+  'nupay de r$ 20,60': 'Transporte Trabalho',
+  'nupay de r$ 60,29': 'Alimentação trabalho',
+  'nupay de r$ 22,00': 'Transporte Trabalho',
+  'nupay de r$ 18,90': 'Transporte Trabalho',
+  'carregador amor': 'Amor 😍',
+  'caminho dos reis  1/4': 'Lazer Pessoal',
+  'caminho dos reis  2/4': 'Lazer Pessoal',
+  'caminho dos reis  3/4': 'Lazer Pessoal',
+  'caminho dos reis  4/4': 'Lazer Pessoal',
+  'nupay de r$ 106,04  1/2': 'Alimentação trabalho',
+  'nupay de r$ 106,04  2/2': 'Alimentação trabalho',
+  'nupay de r$ 40,39': 'Alimentação trabalho',
+  'nupay de r$ 61,13  1/2': 'Alimentação trabalho',
+  'nupay de r$ 61,13  2/2': 'Alimentação trabalho',
+  'casadas *casadas  1/7': 'Outros',
+  'casadas *casadas  2/7': 'Outros',
+  'casadas *casadas  3/7': 'Outros',
+  'casadas *casadas  4/7': 'Outros',
+  'casadas *casadas  5/7': 'Outros',
+  'casadas *casadas  6/7': 'Outros',
+  'casadas *casadas  7/7': 'Outros',
+  'nupay de r$ 88,49': 'Alimentação trabalho',
+  'milky moo mooca': 'Extra Orçamento',
+  'outback mooca': 'Extra Orçamento',
+  'ecoparqueaquariod  1/5': 'Amor 😍',
+  'ecoparqueaquariod  2/5': 'Amor 😍',
+  'ecoparqueaquariod  3/5': 'Amor 😍',
+  'ecoparqueaquariod  4/5': 'Amor 😍',
+  'ecoparqueaquariod  5/5': 'Amor 😍',
+  'casadas *casadas  1/10': 'Amor 😍',
+  'casadas *casadas  10/10': 'Amor 😍',
+  'casadas *casadas  2/10': 'Amor 😍',
+  'casadas *casadas  3/10': 'Amor 😍',
+  'casadas *casadas  4/10': 'Amor 😍',
+  'casadas *casadas  5/10': 'Amor 😍',
+  'casadas *casadas  6/10': 'Amor 😍',
+  'casadas *casadas  7/10': 'Amor 😍',
+  'casadas *casadas  8/10': 'Amor 😍',
+  'casadas *casadas  9/10': 'Amor 😍',
+  'kalunga juru*kalunga 0': 'Outros',
+  'nupay de r$ 78,56  1/2': 'Extra Orçamento',
+  'nupay de r$ 78,56  2/2': 'Transporte Trabalho',
+  'nupay de r$ 86,74  1/2': 'Extra Orçamento',
+  'nupay de r$ 86,74  2/2': 'Alimentação trabalho',
+  'dl*google eleven': 'Moradia',
+  'nupay de r$ 69,54  1/2': 'Alimentação trabalho',
+  'nupay de r$ 69,54  2/2': 'Alimentação trabalho',
+  'ifd*sushi praca kennedy d': 'Fim de Semana',
+  'pappo pizza': 'Fim de Semana',
+  'nupay de r$ 16,70': 'Transporte Trabalho',
+  'nupay de r$ 21,50': 'Transporte Trabalho',
+  'foundie cacau show': 'Alimentação trabalho',
+  'nupay de r$ 7,60': 'Transporte Trabalho',
+  'hirota food sao bernar': 'Alimentação trabalho',
+  'ortiz grill ltda': 'Alimentação trabalho',
+  'kit ca cc  1/2': 'Era Pra Gastar Com Isso? Porra',
+  'kit ca cc  2/2': 'Era Pra Gastar Com Isso? Porra',
+  'iguasport decathlon  1/6': 'Lazer Pessoal',
+  'iguasport decathlon  2/6': 'Lazer Pessoal',
+  'iguasport decathlon  3/6': 'Lazer Pessoal',
+  'iguasport decathlon  4/6': 'Lazer Pessoal',
+  'iguasport decathlon  5/6': 'Lazer Pessoal',
+  'iguasport decathlon  6/6': 'Lazer Pessoal',
+  'nupay de r$ 29,10': 'Transporte Trabalho',
+  'nupay de r$ 131,42': 'Alimentação trabalho',
+  'shopping center norte': 'Fim de Semana',
+  'nupay de r$ 35,60': 'Fim de Semana',
+  'ifd*rei do abc especia': 'Alimentação trabalho',
+  'vindi *lojajesuscopy  1/2': 'Outros',
+  'vindi *lojajesuscopy  2/2': 'Outros',
+  'bella municipal c': 'Alimentação trabalho',
+  'cafe retro': 'Extra Orçamento',
+  'autopass s.a*atm tmob': 'Extra Orçamento',
+  'nupay de r$ 121,35  1/2': 'Alimentação trabalho',
+  'nupay de r$ 121,35  2/2': 'Alimentação trabalho',
+  'nupay de r$ 318,46  1/2': 'Outros',
+  'nupay de r$ 318,46  2/2': 'Outros',
+  'pix galo': 'Outros',
+  'c burger barcelona scs': 'Fim de Semana',
+  'mercado*exponexcomerc  1/3': 'Outros',
+  'mercado*exponexcomerc  2/3': 'Outros',
+  'mercado*exponexcomerc  3/3': 'Outros',
+  'kit ferramentas  1/6': 'Era Pra Gastar Com Isso? Porra',
+  'kit ferramentas  2/6': 'Era Pra Gastar Com Isso? Porra',
+  'kit ferramentas  3/6': 'Era Pra Gastar Com Isso? Porra',
+  'kit ferramentas  4/6': 'Era Pra Gastar Com Isso? Porra',
+  'kit ferramentas  5/6': 'Era Pra Gastar Com Isso? Porra',
+  'kit ferramentas  6/6': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 24,62': 'Transporte Trabalho',
+  'hortus comercio de al': 'Fim de Semana',
+  'box raio preto e fogo branco  1/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  10/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  2/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  3/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  4/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  5/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  6/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  7/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  8/10': 'Lazer Pessoal',
+  'box raio preto e fogo branco  9/10': 'Lazer Pessoal',
+  'tiger balm  1/8': 'Outros',
+  'tiger balm  2/8': 'Outros',
+  'tiger balm  3/8': 'Outros',
+  'tiger balm  4/8': 'Outros',
+  'tiger balm  5/8': 'Outros',
+  'tiger balm  6/8': 'Outros',
+  'tiger balm  7/8': 'Outros',
+  'tiger balm  8/8': 'Outros',
+  'premium colection evoluções prismat  1/6': 'Lazer Pessoal',
+  'premium colection evoluções prismat  2/6': 'Lazer Pessoal',
+  'premium colection evoluções prismat  3/6': 'Lazer Pessoal',
+  'premium colection evoluções prismat  4/6': 'Lazer Pessoal',
+  'premium colection evoluções prismat  5/6': 'Lazer Pessoal',
+  'premium colection evoluções prismat  6/6': 'Lazer Pessoal',
+  'pokemon booster box + box eevee  1/3': 'Lazer Pessoal',
+  'pokemon booster box + box eevee  2/3': 'Lazer Pessoal',
+  'pokemon booster box + box eevee  3/3': 'Lazer Pessoal',
+  'ifd*mexican': 'Fim de Semana',
+  'amazon br(begging after the end v3)  1/6': 'Lazer Pessoal',
+  'amazon br(begging after the end v3)  2/6': 'Lazer Pessoal',
+  'amazon br(begging after the end v3)  3/6': 'Lazer Pessoal',
+  'amazon br(begging after the end v3)  4/6': 'Lazer Pessoal',
+  'amazon br(begging after the end v3)  5/6': 'Lazer Pessoal',
+  'amazon br(begging after the end v3)  6/6': 'Lazer Pessoal',
+  'nupay de r$ 81,79': 'Alimentação trabalho',
+  'nupay de r$ 95,90': 'Transporte Trabalho',
+  'nupay de r$ 87,77  1/3': 'Alimentação trabalho',
+  'nupay de r$ 87,77  2/3': 'Alimentação trabalho',
+  'nupay de r$ 87,77  3/3': 'Alimentação trabalho',
+  'ood *bas burguer pendi (pago pelo a': 'Outros',
+  'nupay de r$ 107,92  1/2': 'Extra Orçamento',
+  'nupay de r$ 107,92  2/2': 'Extra Orçamento',
+  '*juliana prado soares': 'Extra Orçamento',
+  'amazonmktplc*artclubsh  1/5': 'Outros',
+  'amazonmktplc*artclubsh  2/5': 'Outros',
+  'amazonmktplc*artclubsh  3/5': 'Outros',
+  'amazonmktplc*artclubsh  4/5': 'Outros',
+  'amazonmktplc*artclubsh  5/5': 'Outros',
+  'r* trip': 'Transporte Trabalho',
+  'fabio (trocado por dinheiro)': 'Outros',
+  '*a marum comercio d': 'Extra Orçamento',
+  '*bcenza lanchonete': 'Extra Orçamento',
+  '*alegria doce progress': 'Extra Orçamento',
+  'r *trip help.uber.com': 'Transporte Trabalho',
+  'nupay de r$ 20,99': 'Transporte Trabalho',
+  'ifd*velocce servicos d': 'Alimentação trabalho',
+  'amazon br yummi and the night paint  1/4': 'Lazer Pessoal',
+  'amazon br yummi and the night paint  2/4': 'Lazer Pessoal',
+  'amazon br yummi and the night paint  3/4': 'Lazer Pessoal',
+  'amazon br yummi and the night paint  4/4': 'Lazer Pessoal',
+  'nupay de r$ 20,82': 'Transporte Trabalho',
+  'ifd*toque do chef hamb': 'Extra Orçamento',
+  'andrei hamburguer nes passado': 'Outros',
+  'padaria delicia': 'Fim de Semana',
+  'habibs (pago pelo gusta)': 'Outros',
+  'abc fast food comerci': 'Fim de Semana',
+  'nupay de r$ 21,20': 'Transporte Trabalho',
+  'bocabertabar': 'Alimentação trabalho',
+  'nupay de r$ 26,90': 'Transporte Trabalho',
+  'ifd*suby laris lanches': 'Alimentação trabalho',
+  'nupay de r$ 17,85': 'Transporte Trabalho',
+  'clm comercio de alimen': 'Fim de Semana',
+  'pagamento praia passagem': 'Fim de Semana',
+  'nupay de r$ 20,50': 'Fim de Semana',
+  'uber uber * pending pago pelo ytal': 'Outros',
+  'praia grande restauran': 'Fim de Semana',
+  'churros da luana': 'Outros',
+  'mercado praia (dividio por tres)': 'Fim de Semana',
+  'mercado praia (dividio pago pelo yt': 'Outros',
+  'uber uber pago matheus': 'Outros',
+  'uber uber * pending santos': 'Fim de Semana',
+  'portal da cultura estação saladino': 'Fim de Semana',
+  'fone galaxy bud fe  1/6': 'Outros',
+  'fone galaxy bud fe  2/6': 'Outros',
+  'fone galaxy bud fe  3/6': 'Outros',
+  'fone galaxy bud fe  4/6': 'Outros',
+  'fone galaxy bud fe  5/6': 'Outros',
+  'fone galaxy bud fe  6/6': 'Outros',
+  'nupay de r$ 29,90': 'Transporte Trabalho',
+  'google parallel space': 'Moradia',
+  'mocoto terca feira belize': 'Fim de Semana',
+  'acopiara': 'Extra Orçamento',
+  'ifd*drogaria familiar': 'Alimentação trabalho',
+  'gusta tenis': 'Outros',
+  'erisvan pacoca': 'Extra Orçamento',
+  '*carolina guerrero fer': 'Extra Orçamento',
+  'refour express - se': 'Extra Orçamento',
+  'iya santo andr': 'Extra Orçamento',
+  'nupay de r$ 18,40': 'Transporte Trabalho',
+  '*zamp sa': 'Extra Orçamento',
+  'marmitas': 'Outros',
+  'ifood sushi': 'Fim de Semana',
+  'nupay de r$ 66,78': 'Fim de Semana',
+  'nupay de r$ 18,33': 'Transporte Trabalho',
+  'nupay de r$ 58,69': 'Extra Orçamento',
+  'nupay de r$ 86,71': 'Extra Orçamento',
+  'nupay de r$ 41,78': 'Extra Orçamento',
+  'nupay de r$ 27,64': 'Extra Orçamento',
+  'nupay de r$ 32,79': 'Alimentação trabalho',
+  'nupay de r$ 11,30': 'Transporte Trabalho',
+  'nupay de r$ 54,78': 'Fim de Semana',
+  'nupay de r$ 66,69': 'Alimentação trabalho',
+  'nupay de r$ 47,79': 'Alimentação trabalho',
+  'magic algodao': 'Fim de Semana',
+  'master team foods': 'Fim de Semana',
+  'bom beef': 'Alimentação trabalho',
+  'nupay de r$ 72,69': 'Alimentação trabalho',
+  'fone galaxy bud fe': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 41,79': 'Alimentação trabalho',
+  'nupay de r$ 79,66': 'Alimentação trabalho',
+  'nupay de r$ 69,66': 'Alimentação trabalho',
+  'cosmere rpg (baralho)': 'Era Pra Gastar Com Isso? Porra',
+  'pen drive': 'Outros',
+  'nupay de r$ 68,59': 'Alimentação trabalho',
+  'nupay de r$ 64,22  1/2': 'Alimentação trabalho',
+  'nupay de r$ 64,22  2/2': 'Alimentação trabalho',
+  'kevin bas burguer': 'Fim de Semana',
+  'nupay de r$ 12,46': 'Transporte Trabalho',
+  'nupay de r$ 113,25  1/2': 'Fim de Semana',
+  'nupay de r$ 113,25  2/2': 'Fim de Semana',
+  'nupay de r$ 53,42': 'Alimentação trabalho',
+  'nupay de r$ 18,30': 'Transporte Trabalho',
+  'nupay de r$ 24,20': 'Transporte Trabalho',
+  'cosmere rpg - daniel (sera pago)  1/5': 'Outros',
+  'cosmere rpg - daniel (sera pago)  2/5': 'Outros',
+  'cosmere rpg - daniel (sera pago)  3/5': 'Outros',
+  'cosmere rpg - daniel (sera pago)  4/5': 'Outros',
+  'cosmere rpg - daniel (sera pago)  5/5': 'Outros',
+  'nupay de r$ 60,79': 'Alimentação trabalho',
+  'cosmere rpg  1/5': 'Lazer Pessoal',
+  'cosmere rpg  2/5': 'Lazer Pessoal',
+  'cosmere rpg  3/5': 'Lazer Pessoal',
+  'cosmere rpg  4/5': 'Lazer Pessoal',
+  'cosmere rpg  5/5': 'Lazer Pessoal',
+  'nupay de r$ 23,60': 'Transporte Trabalho',
+  'nupay de r$ 54,42': 'Alimentação trabalho',
+  'shizuka (bunka)': 'Fim de Semana',
+  'nupay de r$ 13,60': 'Transporte Trabalho',
+  'nupay de r$ 69,79': 'Alimentação trabalho',
+  'nupay de r$ 14,62': 'Transporte Trabalho',
+  'nupay de r$ 72,78': 'Extra Orçamento',
+  'nupay de r$ 101,59': 'Extra Orçamento',
+  'nupay de r$ 86,59': 'Fim de Semana',
+  'card pokemon guraco': 'Era Pra Gastar Com Isso? Porra',
+  'r p figueiredo': 'Fim de Semana',
+  'nupay de r$ 23,14': 'Transporte Trabalho',
+  'nupay de r$ 13,76': 'Transporte Trabalho',
+  'nupay de r$ 13,52': 'Transporte Trabalho',
+  'nupay de r$ 16,08': 'Transporte Trabalho',
+  'nupay de r$ 77,38': 'Alimentação trabalho',
+  'nupay de r$ 18,24': 'Transporte Trabalho',
+  'ifood nupay de r$ 101,69': 'Fim de Semana',
+  'nupay de r$ 15,84': 'Transporte Trabalho',
+  'nupay de r$ 73,78': 'Extra Orçamento',
+  'nupay de r$ 60,87': 'Extra Orçamento',
+  's2p*gogoszpatch  1/3': 'Era Pra Gastar Com Isso? Porra',
+  's2p*gogoszpatch  2/3': 'Era Pra Gastar Com Isso? Porra',
+  's2p*gogoszpatch  3/3': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 20,88': 'Transporte Trabalho',
+  'processador ryzen r7 5700x  1/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  10/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  2/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  3/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  4/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  5/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  6/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  7/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  8/10': 'Lazer Pessoal',
+  'processador ryzen r7 5700x  9/10': 'Lazer Pessoal',
+  'nupay de r$ 118,26  1/2': 'Alimentação trabalho',
+  'nupay de r$ 118,26  2/2': 'Alimentação trabalho',
+  'elevenlabs.io': 'Era Pra Gastar Com Isso? Porra',
+  'chocolandia (pago pelo gusta)': 'Fim de Semana',
+  'nupay de r$ 52,68': 'Alimentação trabalho',
+  'nupay de r$ 21,87': 'Transporte Trabalho',
+  'nupay de r$ 24,09': 'Transporte Trabalho',
+  'nupay de r$ 135,12  1/2': 'Alimentação trabalho',
+  'nupay de r$ 135,12  2/2': 'Alimentação trabalho',
+  'nupay de r$ 103,97  1/2': 'Alimentação trabalho',
+  'nupay de r$ 103,97  2/2': 'Alimentação trabalho',
+  'pagamento almoço': 'Alimentação trabalho',
+  'nupay de r$ 48,68': 'Alimentação trabalho',
+  'sleeves deckfake  1/4': 'Lazer Pessoal',
+  'sleeves deckfake  2/4': 'Lazer Pessoal',
+  'sleeves deckfake  3/4': 'Lazer Pessoal',
+  'sleeves deckfake  4/4': 'Lazer Pessoal',
+  'nupay de r$ 20,70': 'Transporte Trabalho',
+  'pego para adiantar contas': 'Outros',
+  'nupay de r$ 56,59  1/2': 'Alimentação trabalho',
+  'nupay de r$ 56,59  2/2': 'Alimentação trabalho',
+  'nupay de r$ 48,69': 'Alimentação trabalho',
+  'paygo*levi churros gou': 'Outros',
+  'guracco bas': 'Fim de Semana',
+  'adriano sleeves': 'Fim de Semana',
+  'nupay de r$ 67,88': 'Extra Orçamento',
+  'nupay de r$ 21,80': 'Transporte Trabalho',
+  'nupay de r$ 63,89': 'Extra Orçamento',
+  'prefeitura - empresa': 'Empresa',
+  'ifd*pastel di fera - s': 'Fim de Semana',
+  'nupay de r$ 26,20': 'Transporte Trabalho',
+  'nupay de r$ 53,79': 'Alimentação trabalho',
+  'shopee *printproxy  1/2': 'Era Pra Gastar Com Isso? Porra',
+  'shopee *printproxy  2/2': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 39,78': 'Alimentação trabalho',
+  'nupay de r$ 70,89': 'Alimentação trabalho',
+  'adriano deck yugioh': 'Era Pra Gastar Com Isso? Porra',
+  'nupay de r$ 106,69': 'Alimentação trabalho',
+  'carrefour e sukya': 'Fim de Semana',
+  'nupay de r$ 27,60': 'Transporte Trabalho',
+  'remédios e desodorante': 'Alimentação trabalho',
+  'nupay de r$ 22,77': 'Transporte Trabalho',
+  'nupay de r$ 3,00': 'Transporte Trabalho',
+  'nupay de r$ 93,01  1/2': 'Alimentação trabalho',
+  'nupay de r$ 93,01  2/2': 'Alimentação trabalho',
+  'nupay de r$ 19,20': 'Transporte Trabalho',
+  'nupay de r$ 41,15': 'Alimentação trabalho',
+  'nupay de r$ 23,45': 'Transporte Trabalho',
+  'nupay de r$ 44,81  1/2': 'Alimentação trabalho',
+  'nupay de r$ 44,81  2/2': 'Alimentação trabalho',
+  'almoço obra': 'Alimentação trabalho',
+  'nupay de r$ 44,00': 'Fim de Semana',
+  'cookie': 'Alimentação trabalho',
+  'imminence show  1/3': 'Lazer Pessoal',
+  'imminence show  2/3': 'Lazer Pessoal',
+  'imminence show  3/3': 'Lazer Pessoal',
+  'nupay de r$ 28,30': 'Transporte Trabalho',
+  'nupay de r$ 44,40': 'Alimentação trabalho',
+  'nupay de r$ 23,50': 'Transporte Trabalho',
+  'nupay de r$ 24,80': 'Transporte Trabalho',
+  'cartas adriano  1/2': 'Lazer Pessoal',
+  'cartas adriano  2/2': 'Lazer Pessoal',
+  'nupay de r$ 23,30': 'Transporte Trabalho',
+  'nupay de r$ 52,98': 'Alimentação trabalho',
+  'nupay de r$ 19,50': 'Transporte Trabalho',
+  'nupay de r$ 84,08  1/2': 'Alimentação trabalho',
+  'nupay de r$ 84,08  2/2': 'Alimentação trabalho',
+  'mercadolivre*olisport  1/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  2/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  3/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  4/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  5/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  6/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  7/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  8/9': 'Lazer Pessoal',
+  'mercadolivre*olisport  9/9': 'Lazer Pessoal',
+  'nupay de r$ 18,20': 'Transporte Trabalho',
+  'nupay de r$ 17,00': 'Transporte Trabalho',
+  'jeronimoabcst': 'Fim de Semana',
+  'nupay de r$ 16,60': 'Transporte Trabalho',
+  'nupay de r$ 71,29': 'Alimentação trabalho',
+  'nupay de r$ 18,10': 'Transporte Trabalho',
+  'nupay de r$ 16,50': 'Transporte Trabalho',
+  'ifood almoço doce': 'Alimentação trabalho',
+  'nupay de r$ 18,60': 'Transporte Trabalho',
+  'google suno ai music': 'Fim de Semana',
+  'extra hiper-1338': 'Fim de Semana',
+  'taco bell (bruno e ed pagos)': 'Outros',
+  'taco bell (meu)': 'Fim de Semana',
+  'tim beta': 'Extra Orçamento',
+  'amazon br(begging after the end v3)': 'Lazer Pessoal',
+  'nupay de r$ 25,20': 'Transporte Trabalho',
+  'nupay de r$ 28,73': 'Transporte Trabalho',
+  'nupay de r$ 19,70': 'Transporte Trabalho',
+  'nupay de r$ 57,26': 'Alimentação trabalho',
+  'nupay de r$ 25,03': 'Transporte Trabalho',
+  'mercadolivre*sccoleci': 'Lazer Pessoal',
+  'ajuste no credito': 'Outros',
+  'pag*steam monster hunter  1/3': 'Outros',
+  'pag*steam monster hunter  2/3': 'Outros',
+  'pag*steam monster hunter  3/3': 'Outros',
+  'ifd*pimenta verde alim': 'Alimentação trabalho',
+  'ifd*50.682.838 luiza pers': 'Alimentação trabalho',
+  'remini.ai no valor de r$ 5,39 foi': 'Extra Orçamento',
+  'ea  1/3': 'Era Pra Gastar Com Isso? Porra',
+  'ea  2/3': 'Era Pra Gastar Com Isso? Porra',
+  'ea  3/3': 'Era Pra Gastar Com Isso? Porra',
+  'roldao': 'Fim de Semana',
+  'almoco mac (pago matheus e augusto)': 'Outros',
+  'churrasco absoluta': 'Fim de Semana',
+  'carrefour agua': 'Alimentação trabalho',
+  'bolas de volei': 'Era Pra Gastar Com Isso? Porra',
+  'golbox (sera pago por b e g 200 cad  1/3': 'Lazer Pessoal',
+  'golbox (sera pago por b e g 200 cad  2/3': 'Outros',
+  'golbox (sera pago por b e g 200 cad  3/3': 'Outros',
+  'mp *samsung  1/7': 'Lazer Pessoal',
+  'mp *samsung  2/7': 'Lazer Pessoal',
+  'mp *samsung  3/7': 'Lazer Pessoal',
+  'mp *samsung  4/7': 'Lazer Pessoal',
+  'mp *samsung  5/7': 'Lazer Pessoal',
+  'mp *samsung  6/7': 'Lazer Pessoal',
+  'mp *samsung  7/7': 'Lazer Pessoal',
+  'mercado pago': 'Outros',
+  'sua fatura, referente à compra rem': 'Extra Orçamento',
+  'ifd*dmr comercio de al': 'Alimentação trabalho',
+  'google story plotter': 'Extra Orçamento',
+  'crea': 'Moradia',
+  'cursos japones/italiano/3d': 'Fim de Semana',
+  'mp *joaoalbertocaldei': 'Outros',
+  'mercadolivre*bazarger  1/2': 'Outros',
+  'mercadolivre*bazarger  2/2': 'Outros',
+  'mercadolivre*krammerc': 'Outros',
+  'google reelshort shor': 'Fim de Semana',
+  'supermercado dom pir': 'Fim de Semana',
+  'morronescomidaveg (andre pago)': 'Fim de Semana',
+  'chq deck charizard e gardevoir  1/5': 'Outros',
+  'chq deck charizard e gardevoir  2/5': 'Outros',
+  'chq deck charizard e gardevoir  3/5': 'Outros',
+  'chq deck charizard e gardevoir  4/5': 'Outros',
+  'chq deck charizard e gardevoir  5/5': 'Outros',
+  'google ori app studio': 'Fim de Semana',
+  'tim*tim 119704919': 'Extra Orçamento',
+  '*leandro lira dos sant': 'Extra Orçamento',
+  'carregour centro': 'Extra Orçamento',
+  'booster box fagulhas impetuosas  1/6': 'Outros',
+  'booster box fagulhas impetuosas  2/6': 'Outros',
+  'booster box fagulhas impetuosas  3/6': 'Outros',
+  'booster box fagulhas impetuosas  4/6': 'Outros',
+  'booster box fagulhas impetuosas  5/6': 'Outros',
+  'booster box fagulhas impetuosas  6/6': 'Outros',
+  'ifd*miranda gimenes re': 'Fim de Semana',
+  'bebida show (pago)': 'Extra Orçamento',
+  'carregour show': 'Fim de Semana',
+  'bebidas show': 'Fim de Semana',
+  'power bank samsung': 'Outros',
+  'mercado livre': 'Fim de Semana',
+  'jeronimo almoco': 'Alimentação trabalho',
+  'presente leon  1/3': 'Outros',
+  'presente leon  2/3': 'Outros',
+  'presente leon  3/3': 'Outros',
+  'etb 151 e box lugia  1/4': 'Outros',
+  'etb 151 e box lugia  2/4': 'Outros',
+  'etb 151 e box lugia  3/4': 'Outros',
+  'etb 151 e box lugia  4/4': 'Outros',
+  'burguer (pago pelo pessoal)': 'Outros',
+  'dinheiro na conta': 'Outros',
+  'pokemon pocket': 'Outros',
+  'booster box fagulhas incadecentes  1/6': 'Outros',
+  'booster box fagulhas incadecentes  2/6': 'Outros',
+  'booster box fagulhas incadecentes  3/6': 'Outros',
+  'booster box fagulhas incadecentes  4/6': 'Outros',
+  'booster box fagulhas incadecentes  5/6': 'Outros',
+  'booster box fagulhas incadecentes  6/6': 'Outros',
+  'salgadinhos mamãe': 'Fim de Semana',
+  'seguro viagem japao  1/3': 'Outros',
+  'seguro viagem japao  2/3': 'Outros',
+  'seguro viagem japao  3/3': 'Outros',
+  'almoco tendall': 'Alimentação trabalho',
+  'uber matheus (pago)': 'Outros',
+  'coop d pedro i santo andre br': 'Extra Orçamento',
+  'janta casa': 'Extra Orçamento',
+  'ifood almoco': 'Alimentação trabalho',
+  'ifood janta': 'Fim de Semana',
+  'livro amazon chama de ferro': 'Fim de Semana',
+  'esfiha - gusta': 'Fim de Semana',
+  'fone realme airbud 5 pro  10/10': 'Outros',
+  'fone realme airbud 5 pro  2/10': 'Outros',
+  'fone realme airbud 5 pro  3/10': 'Outros',
+  'fone realme airbud 5 pro  4/10': 'Outros',
+  'fone realme airbud 5 pro  5/10': 'Outros',
+  'fone realme airbud 5 pro  6/10': 'Outros',
+  'fone realme airbud 5 pro  7/10': 'Outros',
+  'fone realme airbud 5 pro  8/10': 'Outros',
+  'fone realme airbud 5 pro  9/10': 'Outros',
+  'almoco netao': 'Extra Orçamento',
+  'almoco mamis': 'Extra Orçamento',
+  'face garro': 'Extra Orçamento',
+  'almoço spoletto': 'Extra Orçamento',
+  'gusta (habibs)': 'Extra Orçamento',
+  'curso nagasawa  1/3': 'Extra Orçamento',
+  'curso nagasawa  3/3': 'Extra Orçamento',
+  'curso nagasawa  1/2': 'Extra Orçamento',
+  'supermecado fds': 'Fim de Semana',
+  'marivaldopeixoto cabeleleiro': 'Moradia',
+  'walace (sera reembolsado pela hoppe': 'Extras do Trabalho',
+  'fabio board game': 'Fim de Semana',
+  'rp skin  1/2': 'Extra Orçamento',
+  'esfiha afonso': 'Extra Orçamento',
+  'leruth livro': 'Outros',
+  'comida': 'Fim de Semana',
+  'livro amazon': 'Fim de Semana',
+  'inkarnate mapas (nao considerado)': 'Extra Orçamento',
+  'janta semana': 'Extra Orçamento',
+  'spoleto': 'Extra Orçamento',
+  'chiquinhobsorvete': 'Extra Orçamento',
+  'bubble waffle': 'Extra Orçamento',
+  'padiola cartas': 'Extra Orçamento',
+  'pdvs': 'Extra Orçamento',
+  'ar foods coca': 'Extra Orçamento',
+  'panini mushoku tensei vol 1': 'Extra Orçamento',
+  'new pop beginig after the end vol 2': 'Extra Orçamento',
+  'criador de enredos': 'Extra Orçamento',
+  'almoço divino fogão': 'Fim de Semana',
+  'di fera': 'Fim de Semana',
+  'subway domingo': 'Fim de Semana',
+  'casa antiga pizza': 'Fim de Semana',
+  '99 esse': 'Transporte Trabalho',
+  'syrian food': 'Extra Orçamento',
+  'drogasil remedios': 'Extra Orçamento',
+  'coquinha': 'Alimentação trabalho',
+  'rp passa faker  1/3': 'Extra Orçamento',
+  'rp passa faker  2/3': 'Extra Orçamento',
+  'rp passa faker  3/3': 'Extra Orçamento',
+  'milkymoo': 'Extra Orçamento',
+  'boliche': 'Extra Orçamento',
+  'top ofertas': 'Extra Orçamento',
+  'rosa doces': 'Extra Orçamento',
+  'onpix': 'Outros',
+  'lanche pernil': 'Extra Orçamento',
+  'oficio da pizza afonso': 'Fim de Semana',
+  'google hata hajime': 'Outros',
+  'padaria s': 'Fim de Semana',
+  'luvro bigode': 'Fim de Semana',
+  'parafusadeira vonder pf074  1/7': 'Outros',
+  'parafusadeira vonder pf074  2/7': 'Outros',
+  'parafusadeira vonder pf074  3/7': 'Outros',
+  'parafusadeira vonder pf074  5/7': 'Outros',
+  'parafusadeira vonder pf074  6/7': 'Outros',
+  'parafusadeira vonder pf074  7/7': 'Outros',
+  'it take two': 'Outros',
+  'almoço pastel': 'Extra Orçamento',
+  'almoço oxxo': 'Alimentação trabalho',
+  'luvas e gorros': 'Outros',
+  'almoço tendal': 'Alimentação trabalho',
+  'cafe liberdade': 'Fim de Semana',
+  'drogaria sp': 'Fim de Semana',
+  'almoço bigode': 'Alimentação trabalho',
+  'estacionamento shopping abc': 'Alimentação trabalho',
+  'doceru': 'Outros',
+  'almoco macaxeira dia das mães': 'Extra Orçamento',
+  'padaria comida': 'Fim de Semana',
+  'caixa de som (mamis)': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  4/7': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  2/7': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  3/7': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  7/7': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  6/7': 'Extra Orçamento',
+  'monitor portatil arzopa z1c  1/7': 'Extra Orçamento',
+  'fabinho (comida fim de semana)': 'Fim de Semana',
+  'almoço sukya': 'Alimentação trabalho',
+  'capa kindle novo': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  4/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  7/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  3/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  2/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  6/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  1/8': 'Extra Orçamento',
+  'monitor  t350 27 (presente mãe, )  8/8': 'Extra Orçamento',
+  'almoço costela vega': 'Alimentação trabalho',
+  'kindle paperwhite 10 usado  1/2': 'Outros',
+  'kindle paperwhite 10 usado  2/2': 'Outros',
+  'show bmth (eu matheus e augusto  2/6': 'Outros',
+  'show bmth (eu matheus e augusto  5/6': 'Outros',
+  'show bmth (eu matheus e augusto  4/6': 'Outros',
+  'show bmth (eu matheus e augusto  1/6': 'Outros',
+  'show bmth (eu matheus e augusto  3/6': 'Outros',
+  'bk janta': 'Extra Orçamento',
+  'estacionamento shopping sao caetano': 'Extra Orçamento',
+  'chuteira tiempo 10  2/5': 'Outros',
+  'chuteira tiempo 10  4/5': 'Outros',
+  'chuteira tiempo 10  1/5': 'Outros',
+  'chuteira tiempo 10  3/5': 'Outros',
+  'chuteira tiempo 10  5/5': 'Outros',
+  'pagamento gusta açaí': 'Extra Orçamento',
+  'janta fds': 'Extra Orçamento',
+  'cabeleireiro': 'Extra Orçamento',
+  'sushi': 'Extra Orçamento',
+  '1° sessão momo': 'Outros',
+  'emprestimo hermam': 'Extra Orçamento',
+  'santo rock': 'Fim de Semana',
+  'capinhas celular samsung s23  1/3': 'Outros',
+  'capinhas celular samsung s23  3/3': 'Outros',
+  'capinhas celular samsung s23  2/3': 'Outros',
+  'celular galaxy s23 512gb  10/12': 'Outros',
+  'celular galaxy s23 512gb  3/12': 'Outros',
+  'celular galaxy s23 512gb  12/12': 'Outros',
+  'celular galaxy s23 512gb  1/12': 'Outros',
+  'celular galaxy s23 512gb  2/12': 'Outros',
+  'celular galaxy s23 512gb  8/12': 'Outros',
+  'celular galaxy s23 512gb  4/12': 'Outros',
+  'celular galaxy s23 512gb  11/12': 'Outros',
+  'celular galaxy s23 512gb  5/12': 'Outros',
+  'celular galaxy s23 512gb  7/12': 'Outros',
+  'celular galaxy s23 512gb  9/12': 'Outros',
+  'ed tekoa pagamento  11/15': 'Investimentos',
+  'smart fit': 'Moradia',
+  'boticário': 'Extra Orçamento',
+  'ifd*sushi luna restaur': 'Fim de Semana',
+  'mac donalds sorvete': 'Fim de Semana',
+  'pizzaria oficio': 'Fim de Semana',
+  'pes 2021 + patch legends': 'Extra Orçamento',
+  'copafer': 'Extra Orçamento'
+};
+
 const CAT_COLORS = {
   'Transporte Trabalho':              '#63b3ed',
   'Alimentação trabalho':             '#2dd98f',
@@ -1058,6 +2274,41 @@ function renderAll() {
   renderAgenda();
   renderPrevisao();
   renderPreparacao();
+  renderDashOrcamentos();
+}
+
+function renderDashOrcamentos() {
+  const el = document.getElementById('dash-orcamentos');
+  if (!el) return;
+  const orcamentos = calcOrcamentoMes(state.currentYear, state.currentMonth);
+  const txs = filteredTx().filter(t => t.type === 'saida');
+  const gastosCat = {};
+  txs.forEach(t => {
+    const cats = (t.splits && t.splits.length > 1) ? t.splits : [{cat: t.cat, value: t.value}];
+    cats.forEach(s => { gastosCat[s.cat] = (gastosCat[s.cat]||0) + s.value; });
+  });
+  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita' && (orcamentos[c] > 0 || gastosCat[c] > 0));
+  el.innerHTML = cats.map(cat => {
+    const gasto = gastosCat[cat] || 0;
+    const orc   = orcamentos[cat] || 0;
+    const pct   = orc > 0 ? Math.min(100, Math.round(gasto/orc*100)) : (gasto>0?100:0);
+    const col   = CAT_COLORS[cat] || '#718096';
+    const bar   = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : col;
+    const icon  = CAT_ICONS[cat] || '📦';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:11px;color:var(--text2);">${icon} ${cat}</span>
+        <span style="font-size:10px;color:${bar};font-weight:500;">${pct}%</span>
+      </div>
+      <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:5px;">
+        <div style="height:100%;width:${pct}%;background:${bar};border-radius:2px;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'DM Mono',monospace;">
+        <span style="color:${bar};">${fmtBRL(gasto)}</span>
+        ${orc > 0 ? `<span style="color:var(--text3);">${fmtBRL(orc)}</span>` : '<span style="color:var(--text3);">—</span>'}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:12px;">Nenhum gasto ainda</div>';
 }
 
 function fmtBRL(v) {
@@ -2036,82 +3287,36 @@ function closePreview() {
 }
 
 function categorizarLocal(desc, rawDesc, tipo) {
-  const n = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const d = n(desc) + ' ' + n(rawDesc || '');
+  const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const d    = normalize(desc);
+  const draw = normalize(rawDesc || '');
+  const both = d + ' ' + draw;
 
-  // RECEITA — entradas
-  if (tipo === 'entrada') {
-    if (/pix recebido|transferencia recebida|recebida pelo pix/.test(d)) return 'Receita';
-    if (/rendimento|resgate rdb/.test(d)) return 'Investimentos';
-    if (/deposito recebido|emprestimo|boleto recebido/.test(d)) return 'Receita';
-    if (/cashback|estorno|reembolso|devolucao|ajuste a credito/.test(d)) return 'Receita';
-    return 'Receita';
+  // PASSO 1 — lookup direto no histórico real (1204 entradas treinadas)
+  if (HISTORICO_MAPA[d])    return HISTORICO_MAPA[d];
+  if (HISTORICO_MAPA[draw]) return HISTORICO_MAPA[draw];
+  // Busca parcial: verifica se alguma chave do mapa está contida na descrição
+  for (const [key, cat] of Object.entries(HISTORICO_MAPA)) {
+    if (key.length > 5 && both.includes(key)) return cat;
   }
 
-  // INVESTIMENTOS
-  if (/aplicacao rdb|aplicaçao rdb|resgate rdb|nuinvest|tesouro direto|cdb |lci |lca |tekoa|ed tekoa/.test(d)) return 'Investimentos';
+  // PASSO 2 — Entradas sempre são Receita
+  if (tipo === 'entrada') return 'Receita';
 
-  // SERVIÇOS BANCÁRIOS — ignoráveis ou neutros
-  if (/pagamento de fatura|pagamento fatura|valor pendente|rotativo/.test(d)) return 'Serviços';
-  if (/iof de|iof -|juros de pagamento|encargo/.test(d)) return 'Serviços';
-  if (/loteria|loteriasonline/.test(d)) return 'Serviços';
-
-  // TRANSPORTE TRABALHO — baseado no histórico real (1086 registros)
-  if (/uber.*trip|uber.*pending|uber.*cancelar|uber uber|dl \*uber|uberrides|uber\*rides|uber\*trip|dl\*uber/.test(d)) return 'Transporte Trabalho';
-  if (/99app|99 \*99|99app\*99app|99.*nupay/.test(d)) return 'Transporte Trabalho';
-  if (/uber one/.test(d)) return 'Transporte Trabalho';
-  // NuPay sem contexto claro = provavelmente Uber/99 (padrão do histórico)
-  if (/nupay de r\$/.test(d)) return 'Transporte Trabalho';
-
-  // ALIMENTAÇÃO TRABALHO — baseado no histórico (456 registros)
-  if (/quintal dalina|mercado aliados|cozinha popular|mercadinho angelina|bella municipal|jeronimo|jeronimotsales/.test(d)) return 'Alimentação trabalho';
-  if (/oxxo|sondo|3pasteis|hbh ltda|bar metropolis/.test(d)) return 'Alimentação trabalho';
-  if (/mercadinho|mercado(?!.*livre)|lanchonete(?!.*fim)/.test(d)) return 'Alimentação trabalho';
-  if (/mp \*loteria|loteria(?!.*serv)/.test(d)) return 'Alimentação trabalho';
-  // iFood nos dias de semana sem contexto → trabalho (heurística)
-
-  // FIM DE SEMANA — baseado no histórico (288 registros)
-  if (/bas burguer|bas\*burguer|coop.cooper|sukya|nova rick|otaviano|habibs|oficio da pizza|pizzaria oficio/.test(d)) return 'Fim de Semana';
-  if (/99food|ifd\*|ifood\*ifd|ifd\*sushi|ifd\*juliana(?!.*trabalho)/.test(d)) return 'Fim de Semana';
-  if (/mac donalds|mcdonalds|burguer king(?!.*trabalho)|cabana burger|dc comercio de fondue/.test(d)) return 'Fim de Semana';
-  if (/restaurante(?!.*trabalho)|churrascaria(?!.*trabalho)/.test(d)) return 'Fim de Semana';
-
-  // MORADIA — baseado no histórico (220 registros)
-  if (/enel |enelsp|enel$/.test(d)) return 'Moradia';
-  if (/vivo |conta vivo|tim |claro |net |internet/.test(d)) return 'Moradia';
-  if (/amazon prime|amazon prime canais|google one|google youtube|youtube premium/.test(d)) return 'Moradia';
-  if (/chrunchroll|crunchyroll|spotify|ebn.*spotify/.test(d)) return 'Moradia';
-  if (/momo rpg|smart fit(?!.*academia)|google crunchyroll/.test(d)) return 'Moradia';
-  if (/aluguel|condominio|iptu|agua |sabesp|luz |cemig|copel/.test(d)) return 'Moradia';
-
-  // ACADEMIA
-  if (/smart fit|academia|smartfit|crossfit|bluefit|bodytech/.test(d)) return 'Academia';
-
-  // LAZER PESSOAL — baseado no histórico (187 registros)
-  if (/riotgame|riot game|pag\*riotgame|league of legends|valorant/.test(d)) return 'Lazer Pessoal';
-  if (/steam|pag\*steam|playstation|xbox|nintendo|google play|app store/.test(d)) return 'Lazer Pessoal';
-  if (/shopee|eneideias|wix|gggstore|pb kids|riachuelo(?!.*amor)|amazon(?!.*prime|.*livro)/.test(d)) return 'Lazer Pessoal';
-  if (/mercado livre|mercadolivre|mlp \*kabum|kabum/.test(d)) return 'Lazer Pessoal';
-  if (/carregador|cabo usb|acessorio/.test(d)) return 'Lazer Pessoal';
-
-  // AMOR 😍 — baseado no histórico (175 registros)
-  if (/ingresso\.com|clube do ingresso|outback|metropole 118|cinema(?!.*trabalho)/.test(d)) return 'Amor 😍';
-  if (/cinemark|cinepolis|uci cinema/.test(d)) return 'Amor 😍';
-  if (/livro barbara|presente|lojas kangkang|fondue/.test(d)) return 'Amor 😍';
-  if (/pizzariadon|don pizza/.test(d)) return 'Amor 😍';
-
-  // ERA PRA GASTAR COM ISSO? — baseado no histórico (70 registros)
-  if (/deepl|tenorshare|suno inc|guracco|pokemon|arcanine|cartas|baralho|figura|figure/.test(d)) return 'Era Pra Gastar Com Isso? Porra';
-  if (/fcm 26|cosmere|printproxy|bolas dragao|solo leveling(?!.*amor)/.test(d)) return 'Era Pra Gastar Com Isso? Porra';
-
-  // EMPRESA
-  if (/contador|prefeitura.*empresa/.test(d)) return 'Empresa';
-
-  // EXTRAS DO TRABALHO
-  if (/copafer|chaveiroconfi|acqua filtros|sera reembolsado/.test(d)) return 'Extras do Trabalho';
-
-  // SERVIÇOS genérico
-  if (/seguro |anuidade|tarifa|crea |crm |oab |cartorio|despachante/.test(d)) return 'Serviços';
+  // PASSO 3 — Regras por padrão (fallback para o que não estava no histórico)
+  if (/aplicacao rdb|resgate rdb|nuinvest|tesouro/.test(both)) return 'Investimentos';
+  if (/pagamento de fatura|pagamento fatura|iof de|juros de pagamento/.test(both)) return 'Serviços';
+  if (/loteria|loteriasonline/.test(both)) return 'Serviços';
+  if (/uber|99app|99food|uberrides|uberride|dl \*uber|nupay de r\$/.test(both)) return 'Transporte Trabalho';
+  if (/ifood|rappi|restaurante|lanchonete|hamburguer|pizzaria|sushi|burger/.test(both)) return 'Fim de Semana';
+  if (/quintal dalina|mercado aliados|cozinha popular|mercadinho|bella municipal|jeronimo|oxxo|sondo/.test(both)) return 'Alimentação trabalho';
+  if (/enel|vivo|claro|internet|google one|amazon prime|spotify|crunchyroll|youtube|netflix/.test(both)) return 'Moradia';
+  if (/smart fit|academia|crossfit|bluefit/.test(both)) return 'Academia';
+  if (/riotgame|steam|playstation|xbox|shopee|mercado livre|kabum/.test(both)) return 'Lazer Pessoal';
+  if (/ingresso|cinema|cinemark|outback|presente|fondue/.test(both)) return 'Amor 😍';
+  if (/pokemon|arcanine|cartas|baralho|deepl|tenorshare/.test(both)) return 'Era Pra Gastar Com Isso? Porra';
+  if (/copafer|chaveiroconfi|reembolsado/.test(both)) return 'Extras do Trabalho';
+  if (/contador|prefeitura.*empresa/.test(both)) return 'Empresa';
 
   return null;
 }
@@ -2156,136 +3361,239 @@ async function confirmImport() {
 // ============================================================
 // PREPARAÇÃO DO MÊS
 // ============================================================
-function renderPreparacao() {
-  // Preenche receita
-  const recEl = document.getElementById('prep-receita');
-  if (recEl && !recEl.value) recEl.value = state.receitaPrevista || '';
 
-  // Calcula dias do mês
+// Valores por dia da semana (0=Seg ... 6=Dom) — editáveis na UI
+const VALORES_SEMANA_DEFAULT = {
+  0: {transp: 75,  alim: 45},   // Segunda
+  1: {transp: 75,  alim: 45},   // Terça
+  2: {transp: 50,  alim: 45},   // Quarta
+  3: {transp: 50,  alim: 45},   // Quinta
+  4: {transp: 50,  alim: 45},   // Sexta
+  5: {transp: 145, alim: 245},  // Sábado
+  6: {transp: 95,  alim: 200},  // Domingo
+};
+
+// Categorias fixas com valores mensais configuráveis
+const FIXOS_DEFAULT = {
+  academia:    440,   // mensalidade + transporte
+  amor:       1600,   // Amor 😍 mensal
+  moradia:     814,   // assinaturas + contas fixas
+  lazerPessoal: 300,  // jogos, compras
+  outros:      200,   // outros + serviços
+};
+
+function calcOrcamentoMes(ano, mes) {
+  // Conta dias por dia da semana no mês
+  const contagem = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  for (let d = 1; d <= diasNoMes; d++) {
+    const dow = new Date(ano, mes, d).getDay(); // 0=Dom, 1=Seg...
+    const idx = dow === 0 ? 6 : dow - 1;        // converte para 0=Seg...6=Dom
+    contagem[idx]++;
+  }
+  const v = state.valoresSemana || VALORES_SEMANA_DEFAULT;
+  const f = state.fixos || FIXOS_DEFAULT;
+
+  // Seg-Sex: transporte trabalho + alimentação trabalho
+  let transpTrab = 0, alimentTrab = 0;
+  for (let i = 0; i <= 4; i++) {
+    transpTrab += contagem[i] * v[i].transp;
+    alimentTrab += contagem[i] * v[i].alim;
+  }
+  // Sáb+Dom: fim de semana (transporte e alimentação FDS já embutidos)
+  const numFDS = Math.min(contagem[5], contagem[6] + (contagem[5] > contagem[6] ? 1 : 0));
+  const transpFDS  = contagem[5] * v[5].transp + contagem[6] * v[6].transp;
+  const alimentFDS = contagem[5] * v[5].alim   + contagem[6] * v[6].alim;
+
+  return {
+    'Transporte Trabalho':  transpTrab,
+    'Alimentação trabalho': alimentTrab,
+    'Fim de Semana':        transpFDS + alimentFDS,
+    'Academia':             f.academia,
+    'Amor 😍':              f.amor,
+    'Moradia':              f.moradia,
+    'Lazer Pessoal':        f.lazerPessoal,
+    'Serviços':             0,
+    'Investimentos':        0,
+    'Era Pra Gastar Com Isso? Porra': 0,
+    'Extra Orçamento':      0,
+    'Outros':               f.outros,
+    _diasNoMes:             diasNoMes,
+    _contagem:              contagem,
+  };
+}
+
+function renderPreparacao() {
+  const orcamentos = calcOrcamentoMes(state.currentYear, state.currentMonth);
+  // Salva no state para uso em outros lugares
+  state.orcamentos = orcamentos;
+
+  const diasNoMes = orcamentos._diasNoMes;
   const hoje = new Date();
-  const diasNoMes = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
   const diaAtual = (state.currentMonth === hoje.getMonth() && state.currentYear === hoje.getFullYear())
     ? hoje.getDate() : diasNoMes;
   const diasRestantes = diasNoMes - diaAtual;
+  const nomes = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 
   const infoEl = document.getElementById('prep-dias-info');
   if (infoEl) infoEl.textContent = `Dia ${diaAtual} de ${diasNoMes} · ${diasRestantes} dias restantes`;
 
-  // Gastos reais por categoria no mês
+  // Gastos reais por categoria
   const txs = filteredTx().filter(t => t.type === 'saida');
   const gastosCat = {};
   txs.forEach(t => {
-    if (t.splits && t.splits.length > 1) {
-      t.splits.forEach(s => { gastosCat[s.cat] = (gastosCat[s.cat]||0) + s.value; });
-    } else {
-      gastosCat[t.cat] = (gastosCat[t.cat]||0) + t.value;
-    }
+    const cats = (t.splits && t.splits.length > 1) ? t.splits : [{cat: t.cat, value: t.value}];
+    cats.forEach(s => { gastosCat[s.cat] = (gastosCat[s.cat]||0) + s.value; });
   });
 
-  // Grid de inputs de orçamento
-  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita');
-  const grid = document.getElementById('prep-cats-grid');
-  if (grid && !grid.querySelector('input')) {
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;';
-    grid.innerHTML = cats.map(cat => {
-      const orc = state.orcamentos[cat] || 0;
-      const col = CAT_COLORS[cat] || '#718096';
-      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-          <span style="font-size:16px;">${CAT_ICONS[cat]||'📦'}</span>
-          <span style="font-size:12px;font-weight:500;color:var(--text2);">${cat}</span>
-        </div>
-        <input class="form-input" type="number" step="50" value="${orc}"
-          style="font-family:'DM Mono',monospace;font-size:13px;border-color:${col}44;"
-          data-cat="${cat}"
-          oninput="state.orcamentos['${cat.replace(/'/g,"\'")}'] = parseFloat(this.value)||0; updatePrepTotals();">
-      </div>`;
-    }).join('');
+  // Totais
+  const totalOrc   = Object.entries(orcamentos).filter(([k])=>!k.startsWith('_')).reduce((s,[,v])=>s+v,0);
+  const totalGasto = Object.values(gastosCat).reduce((a,b)=>a+b,0);
+  const gastoDiario     = diaAtual > 0 ? totalGasto / diaAtual : 0;
+  const gastoDiarioPrev = diasNoMes > 0 ? totalOrc / diasNoMes : 0;
+  const diffDia = gastoDiario - gastoDiarioPrev;
+
+  // Atualiza total
+  const totEl = document.getElementById('prep-total-orcado');
+  if (totEl) {
+    totEl.textContent = fmtBRL(totalOrc);
+    totEl.style.color = 'var(--text)';
   }
-  updatePrepTotals();
+
+  // Renderiza grid de configuração dos valores por dia
+  const gridEl = document.getElementById('prep-cats-grid');
+  if (gridEl) {
+    const v = state.valoresSemana || VALORES_SEMANA_DEFAULT;
+    const f = state.fixos || FIXOS_DEFAULT;
+    gridEl.style.cssText = '';
+    gridEl.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:10px;">Valores por dia da semana</div>
+      <div style="overflow-x:auto;">
+      <table style="width:100%;font-size:12px;border-collapse:collapse;">
+        <thead><tr style="color:var(--text3);">
+          <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);">Dia</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Transporte</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Alimentação</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);color:var(--text3);"># no mês</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);color:var(--blue);">Subtotal Transp</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);color:var(--green);">Subtotal Alim</th>
+        </tr></thead>
+        <tbody>
+          ${[0,1,2,3,4,5,6].map(i => {
+            const cnt = orcamentos._contagem[i];
+            const st = (v[i].transp * cnt).toFixed(0);
+            const sa = (v[i].alim   * cnt).toFixed(0);
+            const isFDS = i >= 5;
+            return `<tr style="border-bottom:1px solid var(--border);${isFDS?'background:var(--bg3)':''}">
+              <td style="padding:6px 8px;font-weight:500;">${nomes[i]}</td>
+              <td style="padding:6px 4px;"><input type="number" value="${v[i].transp}" min="0" step="5"
+                style="width:70px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;text-align:right;"
+                onchange="updateValorSemana(${i},'transp',this.value)"></td>
+              <td style="padding:6px 4px;"><input type="number" value="${v[i].alim}" min="0" step="5"
+                style="width:70px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;text-align:right;"
+                onchange="updateValorSemana(${i},'alim',this.value)"></td>
+              <td style="padding:6px 8px;text-align:center;color:var(--text3);">${cnt}x</td>
+              <td style="padding:6px 8px;text-align:right;font-family:'DM Mono',monospace;color:var(--blue);">${fmtBRL(parseFloat(st))}</td>
+              <td style="padding:6px 8px;text-align:right;font-family:'DM Mono',monospace;color:var(--green);">${fmtBRL(parseFloat(sa))}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+      ${[
+        ['academia','Academia 💪',f.academia],
+        ['amor','Amor 😍',f.amor],
+        ['moradia','Moradia 🏠',f.moradia],
+        ['lazerPessoal','Lazer Pessoal 🎮',f.lazerPessoal],
+        ['outros','Outros 📦',f.outros],
+      ].map(([key,label,val]) => `
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">${label}</div>
+          <input type="number" value="${val}" min="0" step="50"
+            style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:13px;font-family:'DM Mono',monospace;"
+            onchange="updateFixo('${key}',this.value)">
+        </div>`).join('')}
+    </div>`;
+  }
 
   // Progressão por categoria
   const progEl = document.getElementById('prep-progressao');
   if (!progEl) return;
-  const totalGasto = Object.values(gastosCat).reduce((a,b)=>a+b,0);
-  const gastoDiarioReal = diaAtual > 0 ? totalGasto / diaAtual : 0;
-  const gastoDiarioPrev = diasNoMes > 0 ? Object.values(state.orcamentos).reduce((a,b)=>a+b,0) / diasNoMes : 0;
   const extraCats = [];
 
-  let html = '';
-  // Ordena por % de orçamento usado (maior primeiro)
+  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita');
   const sorted = cats
-    .map(cat => ({cat, gasto: gastosCat[cat]||0, orc: state.orcamentos[cat]||0}))
+    .map(cat => ({cat, gasto: gastosCat[cat]||0, orc: orcamentos[cat]||0}))
     .filter(x => x.gasto > 0 || x.orc > 0)
-    .sort((a,b) => (b.orc>0?b.gasto/b.orc:1) - (a.orc>0?a.gasto/a.orc:1));
+    .sort((a,b) => {
+      const pa = a.orc > 0 ? a.gasto/a.orc : (a.gasto > 0 ? 1.5 : 0);
+      const pb = b.orc > 0 ? b.gasto/b.orc : (b.gasto > 0 ? 1.5 : 0);
+      return pb - pa;
+    });
+
+  const diffColor = diffDia > 0 ? 'var(--red)' : 'var(--green)';
+  let html = `<div style="display:flex;gap:20px;padding:14px 18px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+    <div><div style="font-size:11px;color:var(--text3);">Gasto total</div><div style="font-family:'DM Mono',monospace;font-size:18px;color:var(--red);">${fmtBRL(totalGasto)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Orçamento total</div><div style="font-family:'DM Mono',monospace;font-size:18px;">${fmtBRL(totalOrc)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Gasto médio/dia</div><div style="font-family:'DM Mono',monospace;font-size:18px;">R$ ${Math.round(gastoDiario)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Deveria gastar/dia</div><div style="font-family:'DM Mono',monospace;font-size:18px;">R$ ${Math.round(gastoDiarioPrev)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Diferença/dia</div><div style="font-family:'DM Mono',monospace;font-size:18px;color:${diffColor};">${diffDia>=0?'+':''}R$ ${Math.abs(Math.round(diffDia))}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Previsão fim do mês</div><div style="font-family:'DM Mono',monospace;font-size:18px;color:${gastoDiario*diasNoMes > totalOrc?'var(--red)':'var(--green)'};">${fmtBRL(gastoDiario * diasNoMes)}</div></div>
+  </div>`;
 
   sorted.forEach(({cat, gasto, orc}) => {
     const col = CAT_COLORS[cat] || '#718096';
     const icon = CAT_ICONS[cat] || '📦';
     const pct = orc > 0 ? Math.min(100, Math.round(gasto/orc*100)) : (gasto>0?100:0);
-    const excesso = gasto - orc;
-    const gastoDiarioCat = diaAtual > 0 ? gasto / diaAtual : 0;
-    const previsaoFim = gastoDiarioCat * diasNoMes;
     const estourou = orc > 0 && gasto > orc;
-
+    const excesso  = gasto - orc;
     if (estourou) extraCats.push({cat, gasto, orc, excesso, col, icon});
-
     const barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : col;
-    const orcDisplay = orc > 0 ? fmtBRL(orc) : 'sem limite';
-    const previsaoColor = previsaoFim > orc && orc > 0 ? 'var(--red)' : 'var(--text3)';
+    const gastoDiarioCat = diaAtual > 0 ? gasto / diaAtual : 0;
+    const prevFim = Math.round(gastoDiarioCat * diasNoMes);
+    const prevColor = orc > 0 && prevFim > orc ? 'var(--red)' : 'var(--text3)';
 
-    html += `<div style="padding:14px 18px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:15px;">${icon}</span>
+    html += `<div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span>${icon}</span>
           <span style="font-size:13px;font-weight:500;">${cat}</span>
-          ${estourou ? '<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:2px 6px;border-radius:4px;">ESTOUROU</span>' : ''}
+          ${estourou ? '<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:1px 6px;border-radius:4px;font-weight:500;">ESTOUROU</span>' : ''}
         </div>
-        <div style="text-align:right;">
-          <span style="font-family:'DM Mono',monospace;font-size:13px;color:${barColor};">${fmtBRL(gasto)}</span>
-          <span style="font-size:11px;color:var(--text3);"> / ${orcDisplay}</span>
+        <div style="text-align:right;display:flex;align-items:baseline;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:14px;color:${barColor};">${fmtBRL(gasto)}</span>
+          ${orc > 0 ? `<span style="font-size:11px;color:var(--text3);">/ ${fmtBRL(orc)}</span>` : ''}
         </div>
       </div>
-      <div style="display:flex;gap:4px;margin-bottom:6px;">
-        <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.5s;"></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+        <div style="flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;"></div>
         </div>
-        <span style="font-size:10px;color:var(--text3);min-width:32px;text-align:right;">${pct}%</span>
+        <span style="font-size:10px;color:var(--text3);min-width:28px;text-align:right;">${pct}%</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);">
-        <span>R$ ${gastoDiarioCat.toFixed(0)}/dia · hoje</span>
-        <span style="color:${previsaoColor};">Previsão fim do mês: ${fmtBRL(previsaoFim)}</span>
+        <span>R$ ${Math.round(gastoDiarioCat)}/dia agora</span>
+        <span style="color:${prevColor};">Previsão: ${fmtBRL(prevFim)}</span>
       </div>
     </div>`;
   });
 
-  // Linha de totais
-  const gastoDiarioRealFmt = gastoDiarioReal.toFixed(0);
-  const gastoDiarioPrevFmt = gastoDiarioPrev.toFixed(0);
-  const diffDiario = gastoDiarioReal - gastoDiarioPrev;
-  const diffColor = diffDiario > 0 ? 'var(--red)' : 'var(--green)';
-
-  html = `<div style="display:flex;gap:24px;padding:14px 18px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap;">
-    <div><div style="font-size:11px;color:var(--text3);">Gasto total hoje</div><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--red);">${fmtBRL(totalGasto)}</div></div>
-    <div><div style="font-size:11px;color:var(--text3);">Gasto médio/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;">R$ ${gastoDiarioRealFmt}</div></div>
-    <div><div style="font-size:11px;color:var(--text3);">Deveria gastar/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;">R$ ${gastoDiarioPrevFmt}</div></div>
-    <div><div style="font-size:11px;color:var(--text3);">Diferença/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;color:${diffColor};">${diffDiario>=0?'+':''}R$ ${Math.abs(diffDiario).toFixed(0)}</div></div>
-  </div>` + html;
-
   progEl.innerHTML = html || '<div class="empty">Nenhum gasto no mês</div>';
 
-  // Extra orçamento
+  // Extra Orçamento
   const extraEl = document.getElementById('prep-extra');
   if (extraEl) {
     if (!extraCats.length) {
       extraEl.innerHTML = '<div class="empty" style="color:var(--green)">✓ Nenhuma categoria estourou o orçamento este mês</div>';
     } else {
-      const totalExtra = extraCats.reduce((s,c)=>s+c.excesso,0);
+      const totalExtra = extraCats.reduce((s,c)=>s+Math.max(0,c.excesso),0);
       extraEl.innerHTML = `<div style="padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
-        <span style="font-size:12px;color:var(--red);font-weight:500;">${extraCats.length} categoria(s) estourada(s)</span>
-        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">Extra: ${fmtBRL(totalExtra)}</span>
-      </div>` +
-      extraCats.map(({cat,gasto,orc,excesso,col,icon}) => `
+        <span style="font-size:13px;color:var(--red);font-weight:500;">${extraCats.length} categoria(s) estourada(s)</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">+${fmtBRL(totalExtra)} extra</span>
+      </div>` + extraCats.map(({cat,gasto,orc,excesso,col,icon}) => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);">
           <div style="display:flex;align-items:center;gap:8px;">
             <span>${icon}</span>
@@ -2300,27 +3608,22 @@ function renderPreparacao() {
   }
 }
 
-function updatePrepTotals() {
-  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita');
-  const total = cats.reduce((s, cat) => s + (state.orcamentos[cat]||0), 0);
-  const el = document.getElementById('prep-total-orcado');
-  if (el) el.textContent = fmtBRL(total);
-  const rec = parseFloat(document.getElementById('prep-receita')?.value) || 0;
-  el.style.color = total > rec && rec > 0 ? 'var(--red)' : 'var(--green)';
-}
-
-function savePreparacao() {
-  const rec = parseFloat(document.getElementById('prep-receita')?.value) || 0;
-  state.receitaPrevista = rec;
-  // Lê todos os inputs de orçamento
-  document.querySelectorAll('#prep-cats-grid input[data-cat]').forEach(inp => {
-    const cat = inp.dataset.cat;
-    state.orcamentos[cat] = parseFloat(inp.value) || 0;
-  });
+function updateValorSemana(idx, tipo, val) {
+  if (!state.valoresSemana) state.valoresSemana = JSON.parse(JSON.stringify(VALORES_SEMANA_DEFAULT));
+  state.valoresSemana[idx][tipo] = parseFloat(val) || 0;
   saveToStorage();
   renderPreparacao();
-  showToast('Orçamentos salvos ✓');
 }
+
+function updateFixo(key, val) {
+  if (!state.fixos) state.fixos = {...FIXOS_DEFAULT};
+  state.fixos[key] = parseFloat(val) || 0;
+  saveToStorage();
+  renderPreparacao();
+}
+
+function updatePrepTotals() { renderPreparacao(); }
+function savePreparacao() { saveToStorage(); showToast('Configuração salva ✓'); }
 
 // ============================================================
 // SHEETS SYNC
