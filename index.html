@@ -404,6 +404,9 @@
       <span class="nav-icon">🏷</span><span class="nav-label">Categorias</span>
     </div>
     <div class="nav-section">Planejamento</div>
+    <div class="nav-item" onclick="showPage('preparacao')">
+      <span class="nav-icon">📋</span><span class="nav-label">Prep. do Mês</span>
+    </div>
     <div class="nav-item" onclick="showPage('agenda')">
       <span class="nav-icon">📅</span><span class="nav-label">Agenda</span>
     </div>
@@ -651,6 +654,45 @@
         </div>
       </div>
 
+      <!-- PREPARAÇÃO DO MÊS -->
+      <div class="page" id="page-preparacao">
+        <div class="section-box" style="margin-bottom:14px;">
+          <div class="section-header">
+            <span class="section-title">Orçamento mensal por categoria</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="font-size:12px;color:var(--text3);">Receita prevista:</span>
+              <input class="form-input" id="prep-receita" type="number" step="100" placeholder="0,00"
+                style="width:140px;font-family:'DM Mono',monospace;font-size:13px;"
+                oninput="renderPreparacao()">
+              <button class="btn btn-primary" onclick="savePreparacao()">✓ Salvar orçamentos</button>
+            </div>
+          </div>
+          <div style="padding:18px;" id="prep-cats-grid"></div>
+          <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;color:var(--text3);">Total orçado:</span>
+            <span style="font-family:'DM Mono',monospace;font-size:14px;" id="prep-total-orcado">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- Progressão do mês atual -->
+        <div class="section-box" style="margin-bottom:14px;">
+          <div class="section-header">
+            <span class="section-title">Progressão do mês — gasto por categoria</span>
+            <div style="font-size:12px;color:var(--text3);" id="prep-dias-info"></div>
+          </div>
+          <div id="prep-progressao"></div>
+        </div>
+
+        <!-- Extra Orçamento -->
+        <div class="section-box">
+          <div class="section-header">
+            <span class="section-title" style="color:var(--red);">🚨 Extra Orçamento</span>
+            <span style="font-size:12px;color:var(--text3);">Gastos que estouraram o orçamento</span>
+          </div>
+          <div id="prep-extra"></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /shell -->
@@ -809,9 +851,7 @@ async function categorizarComIA(transactions) {
 
   showToast(`Categorizando ${semCategoria.length} transações com IA...`, '🤖');
 
-  const prompt = `Você é um categorizador de transações financeiras brasileiras.
-Para cada transação abaixo, retorne APENAS JSON com a categoria correta.
-Categorias disponíveis: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Compras, Serviços, Investimento, Receita, Outros.
+  const prompt = `Você é um categorizador de transações financeiras pessoais brasileiras. Use EXATAMENTE uma das categorias abaixo:\nTransporte Trabalho, Alimentação trabalho, Fim de Semana, Lazer Pessoal, Moradia, Amor 😍, Academia, Serviços, Investimentos, Era Pra Gastar Com Isso? Porra, Extra Orçamento, Empresa, Extras do Trabalho, Receita, Outros.\n\nContexto: Transporte Trabalho=Uber/99 para trabalho; Alimentação trabalho=restaurantes perto do trabalho (Quintal Dalina, Mercado Aliados, Oxxo, mercadinhos); Fim de Semana=restaurantes/bares/delivery no lazer; Lazer Pessoal=jogos/compras online/eletrônicos; Moradia=streaming+internet+energia; Amor 😍=presentes+cinema+saídas a dois; Serviços=loteria+IOF+tarifas.
 
 Transações:
 ${semCategoria.map((t, i) => `${i}. "${t.desc}" - R$ ${t.value} - tipo: ${t.type}`).join('\n')}
@@ -848,6 +888,8 @@ let state = {
   scheduled: [],
   categories: {},
   limits: {},
+  orcamentos: {}, // orçamento mensal por categoria
+  receitaPrevista: 0,
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear(),
   filter: 'all',
@@ -857,25 +899,58 @@ let state = {
   charts: {}
 };
 
+// Orçamentos padrão baseados no seu histórico
+const ORCAMENTOS_DEFAULT = {
+  'Transporte Trabalho':            600,
+  'Alimentação trabalho':           400,
+  'Fim de Semana':                  800,
+  'Lazer Pessoal':                  300,
+  'Moradia':                        500,
+  'Amor 😍':                        400,
+  'Academia':                       130,
+  'Serviços':                       100,
+  'Investimentos':                  500,
+  'Era Pra Gastar Com Isso? Porra': 200,
+  'Empresa':                        200,
+  'Extras do Trabalho':             100,
+  'Outros':                         150,
+};
+
 // Categorias padrão
 const CAT_COLORS = {
-  'Alimentação':    '#2dd98f',
-  'Transporte':     '#63b3ed',
-  'Moradia':        '#b794f4',
-  'Saúde':          '#f6ad55',
-  'Lazer':          '#f56565',
-  'Educação':       '#76e4f7',
-  'Compras':        '#fbb6ce',
-  'Serviços':       '#68d391',
-  'Investimento':   '#a0aec0',
-  'Receita':        '#2dd98f',
-  'Outros':         '#718096',
+  'Transporte Trabalho':              '#63b3ed',
+  'Alimentação trabalho':             '#2dd98f',
+  'Fim de Semana':                    '#f6ad55',
+  'Lazer Pessoal':                    '#b794f4',
+  'Moradia':                          '#76e4f7',
+  'Amor 😍':                          '#fbb6ce',
+  'Academia':                         '#68d391',
+  'Serviços':                         '#a0aec0',
+  'Investimentos':                    '#4fd1c5',
+  'Era Pra Gastar Com Isso? Porra':   '#f56565',
+  'Extra Orçamento':                  '#fc8181',
+  'Empresa':                          '#90cdf4',
+  'Extras do Trabalho':               '#9ae6b4',
+  'Receita':                          '#48bb78',
+  'Outros':                           '#718096',
 };
 
 const CAT_ICONS = {
-  'Alimentação':'🍔','Transporte':'🚗','Moradia':'🏠','Saúde':'💊',
-  'Lazer':'🎮','Educação':'📚','Compras':'🛍','Serviços':'⚡',
-  'Investimento':'📈','Receita':'💰','Outros':'📦'
+  'Transporte Trabalho':'🚗',
+  'Alimentação trabalho':'🍱',
+  'Fim de Semana':'🌅',
+  'Lazer Pessoal':'🎮',
+  'Moradia':'🏠',
+  'Amor 😍':'❤️',
+  'Academia':'💪',
+  'Serviços':'⚡',
+  'Investimentos':'📈',
+  'Era Pra Gastar Com Isso? Porra':'🤦',
+  'Extra Orçamento':'🚨',
+  'Empresa':'💼',
+  'Extras do Trabalho':'🔧',
+  'Receita':'💰',
+  'Outros':'📦',
 };
 
 // ============================================================
@@ -901,6 +976,13 @@ function loadFromStorage() {
       Object.assign(state, parsed);
       state.charts = {};
     }
+    // Preenche orçamentos com defaults para categorias sem orçamento salvo
+    if (!state.orcamentos || !Object.keys(state.orcamentos).length) {
+      state.orcamentos = {...ORCAMENTOS_DEFAULT};
+    }
+    Object.keys(ORCAMENTOS_DEFAULT).forEach(cat => {
+      if (state.orcamentos[cat] === undefined) state.orcamentos[cat] = ORCAMENTOS_DEFAULT[cat];
+    });
   } catch(e) {}
 }
 
@@ -919,7 +1001,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelector(`[onclick="showPage('${name}')"]`).classList.add('active');
-  const titles = {dashboard:'Dashboard',transacoes:'Transações',categorias:'Categorias',agenda:'Agenda',previsao:'Previsão',importar:'Importar'};
+  const titles = {dashboard:'Dashboard',transacoes:'Transações',categorias:'Categorias',preparacao:'Preparação do Mês',agenda:'Agenda',previsao:'Previsão',importar:'Importar'};
   document.getElementById('page-title').textContent = titles[name] || name;
   renderAll();
 }
@@ -975,6 +1057,7 @@ function renderAll() {
   renderCatPage();
   renderAgenda();
   renderPrevisao();
+  renderPreparacao();
 }
 
 function fmtBRL(v) {
@@ -1953,76 +2036,82 @@ function closePreview() {
 }
 
 function categorizarLocal(desc, rawDesc, tipo) {
-  // normaliza desc + rawDesc juntos para maior cobertura
-  const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const d = normalize(desc) + ' ' + normalize(rawDesc || '');
+  const n = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const d = n(desc) + ' ' + n(rawDesc || '');
 
-  // Entradas: categorizar pelo tipo antes das regras
+  // RECEITA — entradas
   if (tipo === 'entrada') {
-    if (/pix recebido|transferencia recebida|transferencia recebida|recebida pelo pix/.test(d)) return 'Receita';
-    if (/rendimento|resgate rdb|resgate/.test(d)) return 'Investimento';
-    if (/deposito recebido|deposito de emprestimo|emprestimo|boleto/.test(d)) return 'Receita';
-    if (/cashback|estorno|reembolso|devolucao/.test(d)) return 'Receita';
-    if (/salario|salário/.test(d)) return 'Receita';
+    if (/pix recebido|transferencia recebida|recebida pelo pix/.test(d)) return 'Receita';
+    if (/rendimento|resgate rdb/.test(d)) return 'Investimentos';
+    if (/deposito recebido|emprestimo|boleto recebido/.test(d)) return 'Receita';
+    if (/cashback|estorno|reembolso|devolucao|ajuste a credito/.test(d)) return 'Receita';
+    return 'Receita';
   }
 
-  // Investimento — antes de tudo pois "aplicacao rdb" pode ter "mercado" no nome
-  if (/aplicacao rdb|aplicação rdb|resgate rdb|nuinvest|xp invest|tesouro direto|cdb|lci |lca |fundo|bitcoin|cripto|binance|coinbase|inter invest|rico invest/.test(d)) return 'Investimento';
+  // INVESTIMENTOS
+  if (/aplicacao rdb|aplicaçao rdb|resgate rdb|nuinvest|tesouro direto|cdb |lci |lca |tekoa|ed tekoa/.test(d)) return 'Investimentos';
 
-  // Serviços internos do banco (não são gastos reais)
-  if (/pagamento de fatura|pagamento fatura/.test(d)) return 'Serviços';
+  // SERVIÇOS BANCÁRIOS — ignoráveis ou neutros
+  if (/pagamento de fatura|pagamento fatura|valor pendente|rotativo/.test(d)) return 'Serviços';
+  if (/iof de|iof -|juros de pagamento|encargo/.test(d)) return 'Serviços';
+  if (/loteria|loteriasonline/.test(d)) return 'Serviços';
 
-  // Alimentação
-  if (/ifood|rappi|uber eats|ubereats|delivery|supermercado|mercadinho|hortifruti|açougue|acougue|padaria|panificadora|mercearia|quitanda|feira|peixaria|carrefour|extra |pao de acucar|pão de acucar|atacadao|assai|sams club|walmart|big |makro|bom preco|prezunic|supernosso|varejao|lavoura|seara|perini|zaffari|saint marche|mambo/.test(d)) return 'Alimentação';
-  if (/restaurante|lanchonete|pizzaria|hamburger|hamburguer|sushi|churrascaria|churrasco|temakeria|creperia|sorveteria|acai|açai|bar do|bar e |boteco|barzinho|choperia|pastelaria|tapiocaria|espetinho|esfiharia|kebab|cachorro|hot dog|crepe|porcao|porcão|prato feito|self service|mineiro|dalina|quintal|bella/.test(d)) return 'Alimentação';
-  if (/mp \*|mercpagoparcel|mercpago|meli\*/.test(d)) return 'Compras'; // Mercado Pago genérico
+  // TRANSPORTE TRABALHO — baseado no histórico real (1086 registros)
+  if (/uber.*trip|uber.*pending|uber.*cancelar|uber uber|dl \*uber|uberrides|uber\*rides|uber\*trip|dl\*uber/.test(d)) return 'Transporte Trabalho';
+  if (/99app|99 \*99|99app\*99app|99.*nupay/.test(d)) return 'Transporte Trabalho';
+  if (/uber one/.test(d)) return 'Transporte Trabalho';
+  // NuPay sem contexto claro = provavelmente Uber/99 (padrão do histórico)
+  if (/nupay de r\$/.test(d)) return 'Transporte Trabalho';
 
-  // Transporte
-  if (/uber|99app|99taxi|cabify|taxi|táxi|rideshare|bom\.com\.br/.test(d)) return 'Transporte';
-  if (/combustivel|gasolina|alcool|etanol|posto |shell |ipiranga|br distribuidora|ale |raizen|petroleo brasileiro/.test(d)) return 'Transporte';
-  if (/pedagio|pedágio|sem parar|veloe|conectcar|repom/.test(d)) return 'Transporte';
-  if (/estacionamento|parking|autopark|estapar/.test(d)) return 'Transporte';
-  if (/oficina|mecanica|mecânica|autopecas|autopeças|borracharia|funilaria|pintura automotiva|revisao veiculo/.test(d)) return 'Transporte';
-  if (/metro |metrô |bilhete unico|bilhetagem|sptrans|onibus|ônibus/.test(d)) return 'Transporte';
+  // ALIMENTAÇÃO TRABALHO — baseado no histórico (456 registros)
+  if (/quintal dalina|mercado aliados|cozinha popular|mercadinho angelina|bella municipal|jeronimo|jeronimotsales/.test(d)) return 'Alimentação trabalho';
+  if (/oxxo|sondo|3pasteis|hbh ltda|bar metropolis/.test(d)) return 'Alimentação trabalho';
+  if (/mercadinho|mercado(?!.*livre)|lanchonete(?!.*fim)/.test(d)) return 'Alimentação trabalho';
+  if (/mp \*loteria|loteria(?!.*serv)/.test(d)) return 'Alimentação trabalho';
+  // iFood nos dias de semana sem contexto → trabalho (heurística)
 
-  // Moradia
-  if (/aluguel|condominio|condomínio|iptu|agua |sabesp|saneamento|esgoto/.test(d)) return 'Moradia';
-  if (/cemig|copel|energisa|enel |coelba|celpe|cosern|ceal|celpa|ampla|elektro|eletropaulo|neoenergia|light |cpfl/.test(d)) return 'Moradia';
-  if (/gas encanado|comgas|cgas|gas natural fenosa|naturgy/.test(d)) return 'Moradia';
-  if (/internet|banda larga|fibra|vivo |claro |oi |net |tim |sky |embratel|nextel/.test(d)) return 'Moradia';
+  // FIM DE SEMANA — baseado no histórico (288 registros)
+  if (/bas burguer|bas\*burguer|coop.cooper|sukya|nova rick|otaviano|habibs|oficio da pizza|pizzaria oficio/.test(d)) return 'Fim de Semana';
+  if (/99food|ifd\*|ifood\*ifd|ifd\*sushi|ifd\*juliana(?!.*trabalho)/.test(d)) return 'Fim de Semana';
+  if (/mac donalds|mcdonalds|burguer king(?!.*trabalho)|cabana burger|dc comercio de fondue/.test(d)) return 'Fim de Semana';
+  if (/restaurante(?!.*trabalho)|churrascaria(?!.*trabalho)/.test(d)) return 'Fim de Semana';
 
-  // Saúde
-  if (/farmacia|drogaria|ultrafarma|panvel|droga raia|drogasil|pacheco|nissei|pague menos|onofre|extrafarma/.test(d)) return 'Saúde';
-  if (/unimed|amil|bradesco saude|sulamerica|hapvida|notredame|prevent senior|plano de saude|plano saude/.test(d)) return 'Saúde';
-  if (/medico|médico|dentista|psicologo|psicólogo|nutricionista|fisioterapeuta|oftalmo|dermato|ortopedi/.test(d)) return 'Saúde';
-  if (/hospital|clinica|clínica|laboratorio|laboratório|exame |consulta |cirurgia|prontoatendimento|upa |pronto socorro/.test(d)) return 'Saúde';
+  // MORADIA — baseado no histórico (220 registros)
+  if (/enel |enelsp|enel$/.test(d)) return 'Moradia';
+  if (/vivo |conta vivo|tim |claro |net |internet/.test(d)) return 'Moradia';
+  if (/amazon prime|amazon prime canais|google one|google youtube|youtube premium/.test(d)) return 'Moradia';
+  if (/chrunchroll|crunchyroll|spotify|ebn.*spotify/.test(d)) return 'Moradia';
+  if (/momo rpg|smart fit(?!.*academia)|google crunchyroll/.test(d)) return 'Moradia';
+  if (/aluguel|condominio|iptu|agua |sabesp|luz |cemig|copel/.test(d)) return 'Moradia';
 
-  // Lazer / Assinaturas
-  if (/netflix|spotify|amazon prime|hbo max|disney\+|globoplay|apple tv|paramount|crunchyroll|mubi|deezer|youtube premium/.test(d)) return 'Lazer';
-  if (/cinema|cinemark|cinepolis|uci|playarte|teatro|show |ingresso|eventim|ticket|sympla|balada|boate|clube/.test(d)) return 'Lazer';
-  if (/steam|playstation|xbox|nintendo|epic games|google play|app store|nuuvem|humble|gog\.com/.test(d)) return 'Lazer';
-  if (/viagem|hotel|pousada|hostel|airbnb|booking|trivago|decolar|cvc |latam|gol |azul |tap |emirates/.test(d)) return 'Lazer';
-  if (/barbearia|barbeiro|salao|salão|cabeleireiro|manicure|estetica|estética|spa |massagem/.test(d)) return 'Lazer';
-  if (/academia|crossfit|pilates|yoga|natacao|natação|futebol|quadra|clube desportivo/.test(d)) return 'Saúde';
+  // ACADEMIA
+  if (/smart fit|academia|smartfit|crossfit|bluefit|bodytech/.test(d)) return 'Academia';
 
-  // Educação
-  if (/escola|colegio|colégio|faculdade|universidade|curso |udemy|coursera|alura|dio\.me|rocketseat|origamid/.test(d)) return 'Educação';
-  if (/livraria|saraiva|cultura |fnac|amazon livro|submarino livro|estante virtual/.test(d)) return 'Educação';
-  if (/mensalidade escola|mensalidade colegio|boleto escola|boleto faculdade/.test(d)) return 'Educação';
+  // LAZER PESSOAL — baseado no histórico (187 registros)
+  if (/riotgame|riot game|pag\*riotgame|league of legends|valorant/.test(d)) return 'Lazer Pessoal';
+  if (/steam|pag\*steam|playstation|xbox|nintendo|google play|app store/.test(d)) return 'Lazer Pessoal';
+  if (/shopee|eneideias|wix|gggstore|pb kids|riachuelo(?!.*amor)|amazon(?!.*prime|.*livro)/.test(d)) return 'Lazer Pessoal';
+  if (/mercado livre|mercadolivre|mlp \*kabum|kabum/.test(d)) return 'Lazer Pessoal';
+  if (/carregador|cabo usb|acessorio/.test(d)) return 'Lazer Pessoal';
 
-  // Compras / E-commerce
-  if (/amazon|mercado livre|shopee|shein|aliexpress|magalu|magazine luiza|casas bahia|americanas|submarino|extra\.com/.test(d)) return 'Compras';
-  if (/zara|renner|riachuelo|c&a |cea |hering|marisa|leader|pernambucanas|lojas americanas/.test(d)) return 'Compras';
-  if (/shopping|loja |lojas |eletronico|informatica|celular|smartphone|notebook|tablet/.test(d)) return 'Compras';
+  // AMOR 😍 — baseado no histórico (175 registros)
+  if (/ingresso\.com|clube do ingresso|outback|metropole 118|cinema(?!.*trabalho)/.test(d)) return 'Amor 😍';
+  if (/cinemark|cinepolis|uci cinema/.test(d)) return 'Amor 😍';
+  if (/livro barbara|presente|lojas kangkang|fondue/.test(d)) return 'Amor 😍';
+  if (/pizzariadon|don pizza/.test(d)) return 'Amor 😍';
 
-  // Serviços / Contas
-  if (/seguro |corretora|cartorio|cartório|despachante|contador|advocacia|juridico|jurídico/.test(d)) return 'Serviços';
-  if (/conselho regional|crea |crm |cfo |oab |cfp /.test(d)) return 'Serviços';  // anuidades profissionais
-  if (/serasa|spc |boa vista/.test(d)) return 'Serviços';
-  if (/recarga |recarga celular|recarga tim|recarga vivo|recarga claro|recarga oi/.test(d)) return 'Serviços';
+  // ERA PRA GASTAR COM ISSO? — baseado no histórico (70 registros)
+  if (/deepl|tenorshare|suno inc|guracco|pokemon|arcanine|cartas|baralho|figura|figure/.test(d)) return 'Era Pra Gastar Com Isso? Porra';
+  if (/fcm 26|cosmere|printproxy|bolas dragao|solo leveling(?!.*amor)/.test(d)) return 'Era Pra Gastar Com Isso? Porra';
 
-  // Transferências Pix enviadas — deixa como Outros para IA categorizar pelo nome
-  // pois pode ser qualquer coisa (aluguel, pessoa física, empresa)
+  // EMPRESA
+  if (/contador|prefeitura.*empresa/.test(d)) return 'Empresa';
+
+  // EXTRAS DO TRABALHO
+  if (/copafer|chaveiroconfi|acqua filtros|sera reembolsado/.test(d)) return 'Extras do Trabalho';
+
+  // SERVIÇOS genérico
+  if (/seguro |anuidade|tarifa|crea |crm |oab |cartorio|despachante/.test(d)) return 'Serviços';
 
   return null;
 }
@@ -2062,6 +2151,175 @@ async function confirmImport() {
   const parc = txs.filter(t=>t.parcela).length;
   showToast(`${txs.length} transações importadas${parc?' · '+parc+' parceladas':''}`);
   sendToSheets();
+}
+
+// ============================================================
+// PREPARAÇÃO DO MÊS
+// ============================================================
+function renderPreparacao() {
+  // Preenche receita
+  const recEl = document.getElementById('prep-receita');
+  if (recEl && !recEl.value) recEl.value = state.receitaPrevista || '';
+
+  // Calcula dias do mês
+  const hoje = new Date();
+  const diasNoMes = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
+  const diaAtual = (state.currentMonth === hoje.getMonth() && state.currentYear === hoje.getFullYear())
+    ? hoje.getDate() : diasNoMes;
+  const diasRestantes = diasNoMes - diaAtual;
+
+  const infoEl = document.getElementById('prep-dias-info');
+  if (infoEl) infoEl.textContent = `Dia ${diaAtual} de ${diasNoMes} · ${diasRestantes} dias restantes`;
+
+  // Gastos reais por categoria no mês
+  const txs = filteredTx().filter(t => t.type === 'saida');
+  const gastosCat = {};
+  txs.forEach(t => {
+    if (t.splits && t.splits.length > 1) {
+      t.splits.forEach(s => { gastosCat[s.cat] = (gastosCat[s.cat]||0) + s.value; });
+    } else {
+      gastosCat[t.cat] = (gastosCat[t.cat]||0) + t.value;
+    }
+  });
+
+  // Grid de inputs de orçamento
+  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita');
+  const grid = document.getElementById('prep-cats-grid');
+  if (grid && !grid.querySelector('input')) {
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;';
+    grid.innerHTML = cats.map(cat => {
+      const orc = state.orcamentos[cat] || 0;
+      const col = CAT_COLORS[cat] || '#718096';
+      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <span style="font-size:16px;">${CAT_ICONS[cat]||'📦'}</span>
+          <span style="font-size:12px;font-weight:500;color:var(--text2);">${cat}</span>
+        </div>
+        <input class="form-input" type="number" step="50" value="${orc}"
+          style="font-family:'DM Mono',monospace;font-size:13px;border-color:${col}44;"
+          data-cat="${cat}"
+          oninput="state.orcamentos['${cat.replace(/'/g,"\'")}'] = parseFloat(this.value)||0; updatePrepTotals();">
+      </div>`;
+    }).join('');
+  }
+  updatePrepTotals();
+
+  // Progressão por categoria
+  const progEl = document.getElementById('prep-progressao');
+  if (!progEl) return;
+  const totalGasto = Object.values(gastosCat).reduce((a,b)=>a+b,0);
+  const gastoDiarioReal = diaAtual > 0 ? totalGasto / diaAtual : 0;
+  const gastoDiarioPrev = diasNoMes > 0 ? Object.values(state.orcamentos).reduce((a,b)=>a+b,0) / diasNoMes : 0;
+  const extraCats = [];
+
+  let html = '';
+  // Ordena por % de orçamento usado (maior primeiro)
+  const sorted = cats
+    .map(cat => ({cat, gasto: gastosCat[cat]||0, orc: state.orcamentos[cat]||0}))
+    .filter(x => x.gasto > 0 || x.orc > 0)
+    .sort((a,b) => (b.orc>0?b.gasto/b.orc:1) - (a.orc>0?a.gasto/a.orc:1));
+
+  sorted.forEach(({cat, gasto, orc}) => {
+    const col = CAT_COLORS[cat] || '#718096';
+    const icon = CAT_ICONS[cat] || '📦';
+    const pct = orc > 0 ? Math.min(100, Math.round(gasto/orc*100)) : (gasto>0?100:0);
+    const excesso = gasto - orc;
+    const gastoDiarioCat = diaAtual > 0 ? gasto / diaAtual : 0;
+    const previsaoFim = gastoDiarioCat * diasNoMes;
+    const estourou = orc > 0 && gasto > orc;
+
+    if (estourou) extraCats.push({cat, gasto, orc, excesso, col, icon});
+
+    const barColor = pct >= 100 ? 'var(--red)' : pct >= 80 ? 'var(--amber)' : col;
+    const orcDisplay = orc > 0 ? fmtBRL(orc) : 'sem limite';
+    const previsaoColor = previsaoFim > orc && orc > 0 ? 'var(--red)' : 'var(--text3)';
+
+    html += `<div style="padding:14px 18px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:15px;">${icon}</span>
+          <span style="font-size:13px;font-weight:500;">${cat}</span>
+          ${estourou ? '<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:2px 6px;border-radius:4px;">ESTOUROU</span>' : ''}
+        </div>
+        <div style="text-align:right;">
+          <span style="font-family:'DM Mono',monospace;font-size:13px;color:${barColor};">${fmtBRL(gasto)}</span>
+          <span style="font-size:11px;color:var(--text3);"> / ${orcDisplay}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:6px;">
+        <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.5s;"></div>
+        </div>
+        <span style="font-size:10px;color:var(--text3);min-width:32px;text-align:right;">${pct}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);">
+        <span>R$ ${gastoDiarioCat.toFixed(0)}/dia · hoje</span>
+        <span style="color:${previsaoColor};">Previsão fim do mês: ${fmtBRL(previsaoFim)}</span>
+      </div>
+    </div>`;
+  });
+
+  // Linha de totais
+  const gastoDiarioRealFmt = gastoDiarioReal.toFixed(0);
+  const gastoDiarioPrevFmt = gastoDiarioPrev.toFixed(0);
+  const diffDiario = gastoDiarioReal - gastoDiarioPrev;
+  const diffColor = diffDiario > 0 ? 'var(--red)' : 'var(--green)';
+
+  html = `<div style="display:flex;gap:24px;padding:14px 18px;background:var(--bg3);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+    <div><div style="font-size:11px;color:var(--text3);">Gasto total hoje</div><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--red);">${fmtBRL(totalGasto)}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Gasto médio/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;">R$ ${gastoDiarioRealFmt}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Deveria gastar/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;">R$ ${gastoDiarioPrevFmt}</div></div>
+    <div><div style="font-size:11px;color:var(--text3);">Diferença/dia</div><div style="font-family:'DM Mono',monospace;font-size:16px;color:${diffColor};">${diffDiario>=0?'+':''}R$ ${Math.abs(diffDiario).toFixed(0)}</div></div>
+  </div>` + html;
+
+  progEl.innerHTML = html || '<div class="empty">Nenhum gasto no mês</div>';
+
+  // Extra orçamento
+  const extraEl = document.getElementById('prep-extra');
+  if (extraEl) {
+    if (!extraCats.length) {
+      extraEl.innerHTML = '<div class="empty" style="color:var(--green)">✓ Nenhuma categoria estourou o orçamento este mês</div>';
+    } else {
+      const totalExtra = extraCats.reduce((s,c)=>s+c.excesso,0);
+      extraEl.innerHTML = `<div style="padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--red);font-weight:500;">${extraCats.length} categoria(s) estourada(s)</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">Extra: ${fmtBRL(totalExtra)}</span>
+      </div>` +
+      extraCats.map(({cat,gasto,orc,excesso,col,icon}) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${icon}</span>
+            <div>
+              <div style="font-size:13px;">${cat}</div>
+              <div style="font-size:11px;color:var(--text3);">Orçado: ${fmtBRL(orc)} · Gasto: ${fmtBRL(gasto)}</div>
+            </div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--red);">+${fmtBRL(excesso)}</div>
+        </div>`).join('');
+    }
+  }
+}
+
+function updatePrepTotals() {
+  const cats = Object.keys(CAT_COLORS).filter(c => c !== 'Receita');
+  const total = cats.reduce((s, cat) => s + (state.orcamentos[cat]||0), 0);
+  const el = document.getElementById('prep-total-orcado');
+  if (el) el.textContent = fmtBRL(total);
+  const rec = parseFloat(document.getElementById('prep-receita')?.value) || 0;
+  el.style.color = total > rec && rec > 0 ? 'var(--red)' : 'var(--green)';
+}
+
+function savePreparacao() {
+  const rec = parseFloat(document.getElementById('prep-receita')?.value) || 0;
+  state.receitaPrevista = rec;
+  // Lê todos os inputs de orçamento
+  document.querySelectorAll('#prep-cats-grid input[data-cat]').forEach(inp => {
+    const cat = inp.dataset.cat;
+    state.orcamentos[cat] = parseFloat(inp.value) || 0;
+  });
+  saveToStorage();
+  renderPreparacao();
+  showToast('Orçamentos salvos ✓');
 }
 
 // ============================================================
