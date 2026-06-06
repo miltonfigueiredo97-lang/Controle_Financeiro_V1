@@ -997,7 +997,7 @@ const HISTORICO_MAPA = {
   'conta vivo': 'Moradia',
   'coop-cooperativa de c': 'Fim de Semana',
   'crédito de confiança de remini.ai': 'Extra Orçamento',
-  'daniel victor de araujo medeiros': 'Empresa',
+  'daniel victor de araujo medeiros': 'Outros',
   'dc comercio de fondue': 'Amor 😍',
   'dl *aliexpress br alip - parcela 1/2': 'Lazer Pessoal',
   'dl *aliexpress br alip - parcela 1/4': 'Amor 😍',
@@ -1027,6 +1027,7 @@ const HISTORICO_MAPA = {
   'giuliana comercio de f - parcela 1/3': 'Amor 😍',
   'gogoszpatch': 'Era Pra Gastar Com Isso? Porra',
   'gohan sushi restaurant': 'Fim de Semana',
+  'gonn fundo de investimento': 'Serviços',
   'gonn fundo de investimento em direitos creditorios': 'Outros',
   'google crunchyroll': 'Moradia',
   'google crunchyroll an': 'Moradia',
@@ -1057,7 +1058,7 @@ const HISTORICO_MAPA = {
   'ifd*toque do chef hamb': 'Extra Orçamento',
   'ifd*velocce servicos d': 'Alimentação trabalho',
   'ifd*zensho do brasil c': 'Alimentação trabalho',
-  'ifood': 'Alimentação trabalho',
+  'ifood': 'Fim de Semana',
   'ifood *ifd*juliana p': 'Alimentação trabalho',
   'ifood - 1/3': 'Alimentação trabalho',
   'ifood - 2/3': 'Alimentação trabalho',
@@ -1201,9 +1202,9 @@ const HISTORICO_MAPA = {
   'outback mooca': 'Extra Orçamento',
   'oxxo travessa municipa': 'Alimentação trabalho',
   'padaria delicia': 'Fim de Semana',
-  'pag*riotgame': 'Outros',
+  'pag*riotgame': 'Lazer Pessoal',
   'pag*riotgame - parcela 1/3': 'Lazer Pessoal',
-  'pag*riotgame - parcela 3/3': 'Outros',
+  'pag*riotgame - parcela 3/3': 'Lazer Pessoal',
   'pag*steam - parcela 1/3': 'Outros',
   'paygo*levi churros gou': 'Outros',
   'paypoint servicos de pagamento ltda': 'Alimentação trabalho',
@@ -1225,6 +1226,7 @@ const HISTORICO_MAPA = {
   'pix enviado - dennis gustavo moreno almeida': 'Transporte Trabalho',
   'pix enviado - erisvan amaral dos santos': 'Moradia',
   'pix enviado - fabio rogerio banin junior': 'Transporte Trabalho',
+  'pix enviado - gonn fundo de investimento em direitos cr': 'Serviços',
   'pix enviado - gustavo magalhaes leme': 'Outros',
   'pix enviado - gustavo motta rodrigues': 'Outros',
   'pix enviado - henrique marcal da silva': 'Moradia',
@@ -1253,6 +1255,7 @@ const HISTORICO_MAPA = {
   'restaurante e churras': 'Outros',
   'restaurante tasty gril': 'Fim de Semana',
   'ri happy brinquedos': 'Era Pra Gastar Com Isso? Porra',
+  'riotgame': 'Lazer Pessoal',
   'roldao santo andre': 'Fim de Semana',
   's2p*gogoszpatch - parcela 1/3': 'Era Pra Gastar Com Isso? Porra',
   'shopee *ktstore': 'Amor 😍',
@@ -2135,6 +2138,15 @@ async function handleFiles(fileList) {
   progLabel.textContent = `${allTx.length} transações · ${dups} já existentes (marcadas)`;
 
   setTimeout(() => { prog.style.display = 'none'; }, 3000);
+  // Categoriza localmente ANTES de mostrar o preview
+  allTx.forEach(tx => {
+    if (tx.cat === 'Outros' || !tx.cat) {
+      const local = categorizarLocal(tx.desc, tx.rawDesc || '', tx.type);
+      if (local) tx.cat = local;
+    }
+    if (!tx.splits) tx.splits = [{cat: tx.cat, value: tx.value, mode: 'value', pct: 100}];
+  });
+
   showPreview(allTx);
 }
 
