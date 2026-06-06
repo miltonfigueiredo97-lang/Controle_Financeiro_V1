@@ -1765,6 +1765,60 @@ function parseCSV(text, filename) {
       tx.parcela = detectParcela(desc);
       results.push(tx);
     });
+  } else if (fname.startsWith('nubank_') || fname.match(/^nubank_\d{4}/i)) {
+    // Nubank CARTÃO DE CRÉDITO: date,title,"amount"
+    // Positivo = gasto, Negativo = estorno ou pagamento de fatura
+    lines.slice(1).forEach(line => {
+      if (!line.trim()) return;
+      const m = line.match(/^(\d{4}-\d{2}-\d{2}),(".*?"|[^,]*),(".*?"|[^,]*)$/);
+      if (!m) return;
+      const date = m[1];
+      const title = m[2].replace(/^"|"$/g,'').replace(/""/g,'"').trim();
+      const amountRaw = m[3].replace(/^"|"$/g,'').replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+      const amount = parseFloat(amountRaw);
+      if (isNaN(amount)) return;
+
+      // Pagamento de fatura e ajustes → ignora
+      const tl = title.toLowerCase();
+      if (/pagamento recebido|ajuste a credito|valor pendente do mes|rotativo/.test(tl) && amount < 0) return;
+      if (/pagamento recebido/.test(tl)) return;
+
+      const type = amount < 0 ? 'entrada' : 'saida'; // negativo = estorno
+
+      // Detecta parcela: "Parcela 7/10" ou "- 2/5" no final
+      let cleanTitle = title;
+      let parcela = null;
+      const pm1 = title.match(/[Pp]arcela\s+(\d+)\/(\d+)/);
+      const pm2 = title.match(/[\s-]+(\d+)\/(\d+)\s*$/);
+      if (pm1) {
+        parcela = {atual: parseInt(pm1[1]), total: parseInt(pm1[2]), valor: Math.abs(amount)};
+        cleanTitle = title.replace(/\s*-?\s*[Pp]arcela\s+\d+\/\d+/,'').trim().replace(/\s*-\s*$/,'').trim();
+      } else if (pm2) {
+        parcela = {atual: parseInt(pm2[1]), total: parseInt(pm2[2]), valor: Math.abs(amount)};
+        cleanTitle = title.slice(0, pm2.index).trim().replace(/\s*-\s*$/,'').trim();
+      }
+
+      // Limpa prefixos e sufixos comuns do Nubank crédito
+      cleanTitle = cleanTitle
+        .replace(/^(Dl \*|Dl\*|Pag\*|Pg \*|Htm\*|S2p\*|Mlp \*|Ebw\*)/i, '')
+        .replace(/\s*-\s*NuPay$/i, '')
+        .replace(/^Uberrides$/i, 'Uber')
+        .replace(/^Uberrides/i, 'Uber')
+        .trim();
+
+      // IOF → agrupa como Serviços
+      let cat = 'Outros';
+      const iofMatch = cleanTitle.match(/IOF de "?([^"]+)"?/i);
+      if (iofMatch) {
+        cleanTitle = 'IOF - ' + iofMatch[1].trim();
+        cat = 'Serviços';
+      }
+      if (/juros de pagamento|rotativo/.test(tl)) { cat = 'Serviços'; }
+
+      const tx = {date, desc: cleanTitle, rawDesc: title, value: Math.abs(amount), type, cat, conta: 'Nubank Crédito'};
+      tx.parcela = parcela || detectParcela(title);
+      results.push(tx);
+    });
   } else {
     // Genérico: tenta separar por vírgula ou ponto-e-vírgula
     const sep = text.includes(';') ? ';' : ',';
@@ -1879,23 +1933,78 @@ function closePreview() {
   window._importQueue = [];
 }
 
-function categorizarLocal(desc) {
-  const d = (desc || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const rules = {
-    'Alimentação': ['supermercado','mercado','ifood','rappi','uber eats','padaria','restaurante','lanchonete','pizzaria','açougue','hortifruti','carrefour','pão de açucar','atacadão','assai','bar '],
-    'Transporte': ['uber','99taxi','cabify','taxi','combustivel','posto','shell','ipiranga','pedágio','sem parar','estacionamento','oficina'],
-    'Moradia': ['aluguel','condominio','iptu','sabesp','cemig','copel','energisa','enel','luz ','gás','comgas','internet','claro','vivo','tim ','net '],
-    'Saúde': ['farmácia','drogaria','ultrafarma','panvel','droga raia','unimed','amil','bradesco saude','médico','dentista','psicólogo','plano de saude','hospital','clinica','laboratorio'],
-    'Lazer': ['netflix','spotify','amazon prime','hbo','disney','globoplay','apple tv','cinema','teatro','show','ingresso','steam','playstation','xbox','google play','app store'],
-    'Educação': ['escola','faculdade','universidade','curso','udemy','coursera','alura','livro','livraria','saraiva','material escolar','papelaria'],
-    'Compras': ['amazon','mercado livre','shopee','shein','aliexpress','magazine','casas bahia','americanas','submarino','zara','renner','riachuelo'],
-    'Serviços': ['seguro','tarifa','taxa','anuidade','cartório','despachante','contador'],
-    'Investimento': ['nuinvest','xp invest','rico ','inter invest','tesouro','cdb','lci','lca','cripto','bitcoin','binance'],
-    'Receita': ['salário','pagamento recebido','transferencia recebida','pix recebido','deposito','rendimento','freelance','cashback','reembolso']
-  };
-  for (const [cat, keywords] of Object.entries(rules)) {
-    if (keywords.some(kw => d.includes(kw))) return cat;
+function categorizarLocal(desc, rawDesc, tipo) {
+  // normaliza desc + rawDesc juntos para maior cobertura
+  const normalize = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const d = normalize(desc) + ' ' + normalize(rawDesc || '');
+
+  // Entradas: categorizar pelo tipo antes das regras
+  if (tipo === 'entrada') {
+    if (/pix recebido|transferencia recebida|transferencia recebida|recebida pelo pix/.test(d)) return 'Receita';
+    if (/rendimento|resgate rdb|resgate/.test(d)) return 'Investimento';
+    if (/deposito recebido|deposito de emprestimo|emprestimo|boleto/.test(d)) return 'Receita';
+    if (/cashback|estorno|reembolso|devolucao/.test(d)) return 'Receita';
+    if (/salario|salário/.test(d)) return 'Receita';
   }
+
+  // Investimento — antes de tudo pois "aplicacao rdb" pode ter "mercado" no nome
+  if (/aplicacao rdb|aplicação rdb|resgate rdb|nuinvest|xp invest|tesouro direto|cdb|lci |lca |fundo|bitcoin|cripto|binance|coinbase|inter invest|rico invest/.test(d)) return 'Investimento';
+
+  // Serviços internos do banco (não são gastos reais)
+  if (/pagamento de fatura|pagamento fatura/.test(d)) return 'Serviços';
+
+  // Alimentação
+  if (/ifood|rappi|uber eats|ubereats|delivery|supermercado|mercadinho|hortifruti|açougue|acougue|padaria|panificadora|mercearia|quitanda|feira|peixaria|carrefour|extra |pao de acucar|pão de acucar|atacadao|assai|sams club|walmart|big |makro|bom preco|prezunic|supernosso|varejao|lavoura|seara|perini|zaffari|saint marche|mambo/.test(d)) return 'Alimentação';
+  if (/restaurante|lanchonete|pizzaria|hamburger|hamburguer|sushi|churrascaria|churrasco|temakeria|creperia|sorveteria|acai|açai|bar do|bar e |boteco|barzinho|choperia|pastelaria|tapiocaria|espetinho|esfiharia|kebab|cachorro|hot dog|crepe|porcao|porcão|prato feito|self service|mineiro|dalina|quintal|bella/.test(d)) return 'Alimentação';
+  if (/mp \*|mercpagoparcel|mercpago|meli\*/.test(d)) return 'Compras'; // Mercado Pago genérico
+
+  // Transporte
+  if (/uber|99app|99taxi|cabify|taxi|táxi|rideshare|bom\.com\.br/.test(d)) return 'Transporte';
+  if (/combustivel|gasolina|alcool|etanol|posto |shell |ipiranga|br distribuidora|ale |raizen|petroleo brasileiro/.test(d)) return 'Transporte';
+  if (/pedagio|pedágio|sem parar|veloe|conectcar|repom/.test(d)) return 'Transporte';
+  if (/estacionamento|parking|autopark|estapar/.test(d)) return 'Transporte';
+  if (/oficina|mecanica|mecânica|autopecas|autopeças|borracharia|funilaria|pintura automotiva|revisao veiculo/.test(d)) return 'Transporte';
+  if (/metro |metrô |bilhete unico|bilhetagem|sptrans|onibus|ônibus/.test(d)) return 'Transporte';
+
+  // Moradia
+  if (/aluguel|condominio|condomínio|iptu|agua |sabesp|saneamento|esgoto/.test(d)) return 'Moradia';
+  if (/cemig|copel|energisa|enel |coelba|celpe|cosern|ceal|celpa|ampla|elektro|eletropaulo|neoenergia|light |cpfl/.test(d)) return 'Moradia';
+  if (/gas encanado|comgas|cgas|gas natural fenosa|naturgy/.test(d)) return 'Moradia';
+  if (/internet|banda larga|fibra|vivo |claro |oi |net |tim |sky |embratel|nextel/.test(d)) return 'Moradia';
+
+  // Saúde
+  if (/farmacia|drogaria|ultrafarma|panvel|droga raia|drogasil|pacheco|nissei|pague menos|onofre|extrafarma/.test(d)) return 'Saúde';
+  if (/unimed|amil|bradesco saude|sulamerica|hapvida|notredame|prevent senior|plano de saude|plano saude/.test(d)) return 'Saúde';
+  if (/medico|médico|dentista|psicologo|psicólogo|nutricionista|fisioterapeuta|oftalmo|dermato|ortopedi/.test(d)) return 'Saúde';
+  if (/hospital|clinica|clínica|laboratorio|laboratório|exame |consulta |cirurgia|prontoatendimento|upa |pronto socorro/.test(d)) return 'Saúde';
+
+  // Lazer / Assinaturas
+  if (/netflix|spotify|amazon prime|hbo max|disney\+|globoplay|apple tv|paramount|crunchyroll|mubi|deezer|youtube premium/.test(d)) return 'Lazer';
+  if (/cinema|cinemark|cinepolis|uci|playarte|teatro|show |ingresso|eventim|ticket|sympla|balada|boate|clube/.test(d)) return 'Lazer';
+  if (/steam|playstation|xbox|nintendo|epic games|google play|app store|nuuvem|humble|gog\.com/.test(d)) return 'Lazer';
+  if (/viagem|hotel|pousada|hostel|airbnb|booking|trivago|decolar|cvc |latam|gol |azul |tap |emirates/.test(d)) return 'Lazer';
+  if (/barbearia|barbeiro|salao|salão|cabeleireiro|manicure|estetica|estética|spa |massagem/.test(d)) return 'Lazer';
+  if (/academia|crossfit|pilates|yoga|natacao|natação|futebol|quadra|clube desportivo/.test(d)) return 'Saúde';
+
+  // Educação
+  if (/escola|colegio|colégio|faculdade|universidade|curso |udemy|coursera|alura|dio\.me|rocketseat|origamid/.test(d)) return 'Educação';
+  if (/livraria|saraiva|cultura |fnac|amazon livro|submarino livro|estante virtual/.test(d)) return 'Educação';
+  if (/mensalidade escola|mensalidade colegio|boleto escola|boleto faculdade/.test(d)) return 'Educação';
+
+  // Compras / E-commerce
+  if (/amazon|mercado livre|shopee|shein|aliexpress|magalu|magazine luiza|casas bahia|americanas|submarino|extra\.com/.test(d)) return 'Compras';
+  if (/zara|renner|riachuelo|c&a |cea |hering|marisa|leader|pernambucanas|lojas americanas/.test(d)) return 'Compras';
+  if (/shopping|loja |lojas |eletronico|informatica|celular|smartphone|notebook|tablet/.test(d)) return 'Compras';
+
+  // Serviços / Contas
+  if (/seguro |corretora|cartorio|cartório|despachante|contador|advocacia|juridico|jurídico/.test(d)) return 'Serviços';
+  if (/conselho regional|crea |crm |cfo |oab |cfp /.test(d)) return 'Serviços';  // anuidades profissionais
+  if (/serasa|spc |boa vista/.test(d)) return 'Serviços';
+  if (/recarga |recarga celular|recarga tim|recarga vivo|recarga claro|recarga oi/.test(d)) return 'Serviços';
+
+  // Transferências Pix enviadas — deixa como Outros para IA categorizar pelo nome
+  // pois pode ser qualquer coisa (aluguel, pessoa física, empresa)
+
   return null;
 }
 
@@ -1908,7 +2017,7 @@ async function confirmImport() {
   // 1. Regras locais
   txs.forEach(tx => {
     if (tx.cat === 'Outros' || !tx.cat) {
-      const local = categorizarLocal(tx.desc);
+      const local = categorizarLocal(tx.desc, tx.rawDesc || '', tx.type);
       if (local) tx.cat = local;
     }
     // Garante splits básico se não tiver
