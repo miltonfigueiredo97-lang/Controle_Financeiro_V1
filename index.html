@@ -1658,16 +1658,61 @@ function parseCSV(text, filename) {
   const results = [];
   const fname = filename.toLowerCase();
 
-  if (fname.includes('nubank')) {
-    // Nubank: Data,Categoria,Título,Valor
+  if (fname.includes('nu_') || fname.includes('nubank')) {
+    // Nubank conta corrente: Data,Valor,Identificador,Descrição
     lines.slice(1).forEach(line => {
-      const cols = line.split(',').map(c=>c.replace(/"/g,'').trim());
-      if (cols.length < 4) return;
-      const [date, , desc, valueStr] = cols;
+      // CSV pode ter vírgulas dentro de campos — split simples funciona pois campos não têm aspas
+      const firstComma = line.indexOf(',');
+      const rest = line.slice(firstComma + 1);
+      const secondComma = rest.indexOf(',');
+      const thirdComma = rest.indexOf(',', secondComma + 1);
+      const dateStr = line.slice(0, firstComma).trim();
+      const valueStr = rest.slice(0, secondComma).trim();
+      // identificador ignorado
+      const rawDesc = rest.slice(thirdComma + 1).trim().replace(/^"|"$/g, '');
+      if (!dateStr || !valueStr) return;
       const value = parseFloat(valueStr.replace(',','.'));
-      if (isNaN(value) || !date) return;
-      const tx = {date: parseDate(date), desc, value: Math.abs(value), type: value > 0 ? 'entrada' : 'saida', cat: 'Outros', conta: 'Nubank'};
-      tx.parcela = detectParcela(desc);
+      if (isNaN(value)) return;
+      const type = value >= 0 ? 'entrada' : 'saida';
+
+      // Limpa descrição: remove dados bancários do Pix
+      let desc = rawDesc;
+      // "Transferência recebida pelo Pix - NOME - CPF - BANCO..." → "Pix recebido - NOME"
+      const pixRecebido = desc.match(/Transfer[eê]ncia recebida pelo Pix - ([^-•]+)/i);
+      if (pixRecebido) desc = 'Pix recebido - ' + pixRecebido[1].trim();
+      // "Transferência Recebida - NOME - CPF - BANCO..." → "Pix recebido - NOME"
+      const transRecebida = desc.match(/Transfer[eê]ncia Recebida - ([^-•]+)/i);
+      if (transRecebida) desc = 'Pix recebido - ' + transRecebida[1].trim();
+      // "Transferência enviada pelo Pix - NOME - CPF - BANCO..." → "Pix enviado - NOME"
+      const pixEnviado = desc.match(/Transfer[eê]ncia enviada pelo Pix - ([^-•]+)/i);
+      if (pixEnviado) desc = 'Pix enviado - ' + pixEnviado[1].trim();
+      // "Compra no débito - NOME" → só NOME
+      const compraDebito = desc.match(/Compra no d[eé]bito(?:\s+via\s+\w+)?\s*-\s*(.+)/i);
+      if (compraDebito) desc = compraDebito[1].trim();
+      // "Estorno - ..." → mantém prefixo Estorno
+      // outros: mantém como está
+
+      // Categorias especiais por tipo de lançamento
+      let cat = 'Outros';
+      const dl = rawDesc.toLowerCase();
+      if (dl.includes('aplicação rdb') || dl.includes('aplicacao rdb')) cat = 'Investimento';
+      else if (dl.includes('resgate rdb')) cat = 'Investimento';
+      else if (dl.includes('pagamento de fatura')) cat = 'Serviços';
+      else if (dl.includes('depósito recebido por boleto') || dl.includes('deposito recebido')) cat = 'Receita';
+      else if (dl.includes('depósito de empréstimo') || dl.includes('deposito de emprestimo')) cat = 'Receita';
+      else if (dl.includes('estorno')) cat = 'Outros';
+
+      const tx = {
+        date: parseDate(dateStr),
+        desc,
+        rawDesc,
+        value: Math.abs(value),
+        type,
+        cat,
+        conta: 'Nubank',
+        id_banco: rest.slice(secondComma + 1, thirdComma).trim()
+      };
+      tx.parcela = detectParcela(rawDesc);
       results.push(tx);
     });
   } else if (fname.includes('c6')) {
@@ -1681,6 +1726,44 @@ function parseCSV(text, filename) {
       if (!date) return;
       if (debVal > 0) results.push({date:parseDate(date),desc,value:debVal,type:'saida',cat:'Outros',conta:'C6 Bank'});
       if (credVal > 0) results.push({date:parseDate(date),desc,value:credVal,type:'entrada',cat:'Outros',conta:'C6 Bank'});
+    });
+  } else if (fname.includes('account_statement') || fname.includes('mercadopago') || fname.includes('mercado_pago') || fname.includes('mp_')) {
+    // Mercado Pago: separador ;, cabeçalho duplo
+    // Estrutura: INITIAL_BALANCE... (linha 0-1) + linha vazia + RELEASE_DATE;TRANSACTION_TYPE;REFERENCE_ID;TRANSACTION_NET_AMOUNT;PARTIAL_BALANCE
+    let txStart = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('RELEASE_DATE')) { txStart = i + 1; break; }
+    }
+    if (txStart < 0) txStart = 1; // fallback
+    lines.slice(txStart).forEach(line => {
+      if (!line.trim()) return;
+      const cols = line.split(';').map(c => c.trim());
+      if (cols.length < 4) return;
+      const [dateRaw, txType, , amountRaw] = cols;
+      if (!dateRaw || !amountRaw) return;
+      // DD-MM-YYYY → YYYY-MM-DD
+      const dateParts = dateRaw.split('-');
+      const date = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : parseDate(dateRaw);
+      const amount = parseFloat(amountRaw.replace(/\./g,'').replace(',','.'));
+      if (isNaN(amount)) return;
+      const type = amount >= 0 ? 'entrada' : 'saida';
+      const desc = txType.trim();
+
+      // Categoria pelo tipo de transação do MP
+      let cat = 'Outros';
+      const dl = desc.toLowerCase();
+      if (dl.includes('rendimento')) cat = 'Investimento';
+      else if (dl.includes('pix enviado') || dl.includes('transferência enviada') || dl.includes('transferencia enviada')) cat = 'Outros';
+      else if (dl.includes('pix recebido') || dl.includes('transferência recebida') || dl.includes('transferencia recebida')) cat = 'Receita';
+      else if (dl.includes('pagamento')) cat = 'Serviços';
+      else if (dl.includes('compra') || dl.includes('débito') || dl.includes('debito')) cat = 'Compras';
+      else if (dl.includes('saque')) cat = 'Outros';
+      else if (dl.includes('reembolso') || dl.includes('estorno') || dl.includes('devolução') || dl.includes('devolucao')) cat = 'Outros';
+      else if (dl.includes('parcel')) cat = 'Compras';
+
+      const tx = {date, desc, value: Math.abs(amount), type, cat, conta: 'Mercado Pago'};
+      tx.parcela = detectParcela(desc);
+      results.push(tx);
     });
   } else {
     // Genérico: tenta separar por vírgula ou ponto-e-vírgula
